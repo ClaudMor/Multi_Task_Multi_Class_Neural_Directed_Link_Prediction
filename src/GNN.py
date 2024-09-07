@@ -307,6 +307,44 @@ class DecoderSourceTargetMulticlass(Module):
         return new_batch
 
 
+class MLP_LP(Module):
+    def __init__(self, input_dim, output_dim, bias, activation = torch.nn.Identity()):
+        super().__init__()
+
+        self.src_linear = Linear(input_dim, output_dim, bias = bias)
+        self.dst_linear = Linear(input_dim, output_dim, bias = bias)
+
+        self.output_dim = output_dim
+        self.activation = activation
+
+    def forward(self, batch):
+
+        if batch.edge_label_index in ["full_graph"]:
+
+            srcs_trasf = self.src_linear(batch.x).reshape(batch.num_nodes, 1, self.output_dim)
+
+            dsts_trasf = self.dst_linear(batch.x)
+
+            x =  (srcs_trasf + dsts_trasf).reshape(-1, self.output_dim) 
+        
+        elif torch.is_tensor(batch.edge_label_index): 
+
+            src_logits = self.src_linear(batch.x[batch.edge_label_index[0,:],:])
+            dst_logits = self.dst_linear(batch.x[batch.edge_label_index[1,:],:])
+
+
+            x = src_logits + dst_logits
+
+
+
+        batch.x = self.activation(x)
+
+        return batch
+
+    def reset_parameters(self):
+        super().reset_parameters()
+        reset_parameters(self.src_linear)
+        reset_parameters(self.dst_linear)
 
 
 class DecoderLinear_for_EffectiveLP(Module):
