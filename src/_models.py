@@ -307,6 +307,8 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "sourcetarget_gae": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True},
 
+                                            "sourcetarget_gae_multiclass": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True}, 
+
                                             "mlp_gae_multiclass": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32,  "bias_decoder": False, "dropout":0.5, "use_sparse_representation": True},
 
                                             "mlp_gae": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32, "bias_decoder": True, "dropout": 0.5, "use_sparse_representation": True},
@@ -370,6 +372,8 @@ models_suggested_parameters_sets = {"cora":{
                                             "sourcetarget_gae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True}, 
 
                                             "mlp_gae": {"input_dimension":15763 ,"hidden_dimension": 64, "output_dimension":32, "bias_decoder": True, "dropout": 0.5, "use_sparse_representation": True }, 
+
+                                            "mlp_gae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True,  "bias_decoder": True, "dropout": 0.5},
 
                                             "digae": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "alpha_init":0.5, "beta_init":0.5, "use_sparse_representation": True, "test_val_binary": True},
 
