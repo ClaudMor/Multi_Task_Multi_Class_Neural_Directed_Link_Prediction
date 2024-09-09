@@ -382,6 +382,8 @@ models_suggested_parameters_sets = {"cora":{
                                             "magnet_ohe": {"input_dimension":15763 , "hidden_dimension": 16, "q":0.5, "K":2, "activation":True, "num_layers":2, "trainable_q":True, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True}, # cannot cache and train q at the same time
 
                                             "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":True, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True},  # cannot cache and train q at the same time
+
+                                            "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}
                                          
                                         }
 
@@ -480,6 +482,8 @@ setup_suggested_parameters_sets = {"cora":{
                                         "magnet_ohe": {"num_epochs":3000 ,  "optimizer_params":{"lr":3e-4}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "weight_decay":5e-4  },
 
                                         "magnet": {"num_epochs":3000 , "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
+
+                                        "magnet_multiclass": {"num_epochs":3000 ,"early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]),  "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  }
 
                                         
                                     }
