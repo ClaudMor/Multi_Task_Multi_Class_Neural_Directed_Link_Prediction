@@ -113,7 +113,7 @@ for i in range(num_runs):
     optimizer = optimizer.__class__(model.parameters(), **optimizer.defaults)
 
     if training_framework == "multiclass":
-        methods.train(train_data_general, model,  train_loss , optimizer, device, num_epochs,  early_stopping = True, val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),  val_loss_fn =  val_loss_fn, validation_on_device=True,  patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
+        methods.train(train_data_general, model,  train_loss , optimizer, device, num_epochs,  early_stopping = True, val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),  val_loss_fn =  val_loss_fn, validation_on_device=True,  patience = 30, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
     elif training_framework == "baseline":
         methods.train(train_data_general, model,  train_loss , optimizer, device, num_epochs,  early_stopping = True, val_datasets = (val_data_general,),  val_loss_fn =  val_loss_fn, validation_on_device=True, patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
     elif training_framework == "scalarization":

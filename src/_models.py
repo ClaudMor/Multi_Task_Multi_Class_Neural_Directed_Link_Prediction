@@ -280,7 +280,7 @@ def get_digae_multiclass(input_dimension, hidden_dimension, output_dimension, al
 
 def get_magnet(input_dimension, hidden_dimension, q, K, activation, num_layers, trainable_q, dropout, cached, bias_decoder, use_sparse_representation, device):
 
-    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, sparse = use_sparse_representation)
+    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, ) # sparse = use_sparse_representation
     decoder = DecoderLinear_for_EffectiveLP(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout)  #  device = device
 
     return Sequential(encoder, decoder).to(device)
@@ -289,8 +289,8 @@ def get_magnet(input_dimension, hidden_dimension, q, K, activation, num_layers, 
 
 def get_magnet_multiclass(input_dimension, hidden_dimension, q, K, activation, num_layers, trainable_q, dropout, cached, bias_decoder, use_sparse_representation, device):
 
-    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached)
-    decoder = DecoderLinear_for_EffectiveLP_multiclass(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) #DecoderLinear_for_EffectiveLP(2*hidden_dimension, 4, bias = bias_decoder, device = device)
+    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, sparse = use_sparse_representation) #sparse = use_sparse_representation
+    decoder = DecoderLinear_for_EffectiveLP_multiclass(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) 
 
     return Sequential(encoder, decoder).to(device)
 
@@ -319,12 +319,9 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
 
-                                            "magnet_ohe": {"input_dimension":2708 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
 
                                             "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
-
-                                            "magnet_multiclass_ohe": {"input_dimension":2708 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
-                                            
+                                         
                                             },
                                         
                                     "citeseer":{
@@ -348,13 +345,11 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "digae": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "alpha_init":0.5, "beta_init":0.5, "use_sparse_representation": True, "test_val_binary": True},
 
-                                            "magnet_ohe": {"input_dimension":3327 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
-
                                             "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
 
                                             "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}, 
 
-                                            "magnet_multiclass_ohe": {"input_dimension":3327 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True},
+
 
                                             
                                             },
@@ -379,11 +374,10 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "digae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "alpha_init":0.5, "beta_init":0.5, "use_sparse_representation": True, "test_val_binary": True},
 
-                                            "magnet_ohe": {"input_dimension":15763 , "hidden_dimension": 16, "q":0.5, "K":2, "activation":True, "num_layers":2, "trainable_q":True, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True}, # cannot cache and train q at the same time
 
                                             "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True},  # cannot cache and train q at the same time
 
-                                            "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}
+                                            "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": True, "use_sparse_representation":False, "bias_decoder":True}
                                          
                                         }
 
@@ -415,11 +409,11 @@ setup_suggested_parameters_sets = {"cora":{
 
                                         "magnet": {"num_epochs":3000 , "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
 
-                                        "magnet_ohe": {"num_epochs":3000 ,  "optimizer_params":{"lr":1e-3}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "weight_decay":5e-4  },
+
 
                                         "magnet_multiclass": {"num_epochs":3000 ,"early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]),  "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
 
-                                        "magnet_multiclass_ohe": {"num_epochs":3000 , "optimizer_params":{"lr":1e-4, "weight_decay":5e-4}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]),   }
+
 
 
                                         },
@@ -436,8 +430,6 @@ setup_suggested_parameters_sets = {"cora":{
 
                                         "sourcetarget_gae": {"num_epochs":1000, "optimizer_params":{"lr":0.02}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([auc_loss, ap_loss])  },
 
-                            
-
                                         "digae_multiclass": {"num_epochs":1000,   "optimizer_params":{"lr":0.002} , "add_remaining_self_loops_supervision" : False, "remaining_supervision_self_loops" : "negatives", "early_stopping":True, "val_loss_fn":  losses_sum_closure([auc_loss, ap_loss])  },
 
                                         "mlp_gae_multiclass": {"num_epochs":1000, "optimizer_params":{"lr":0.002}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([auc_loss, ap_loss])  },
@@ -447,13 +439,11 @@ setup_suggested_parameters_sets = {"cora":{
                                 
                                         "digae": {"num_epochs":1000, "optimizer_params":{"lr":2e-2}, "add_remaining_self_loops_supervision" : False, "early_stopping":True, "val_loss_fn":  losses_sum_closure([auc_loss, ap_loss])  },
 
-                                        "magnet_ohe": {"num_epochs":3000 ,  "optimizer_params":{"lr":1e-3}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "weight_decay":5e-4  },
 
                                         "magnet": {"num_epochs":3000 , "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
 
                                         "magnet_multiclass": {"num_epochs":3000 ,"early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]),  "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
 
-                                        "magnet_multiclass_ohe": {"num_epochs":3000 , "optimizer_params":{"lr":1e-4, "weight_decay":5e-4}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]),   }
 
                                         },
 
@@ -479,7 +469,6 @@ setup_suggested_parameters_sets = {"cora":{
 
                                         "digae_multiclass": {"num_epochs":1000,   "optimizer_params":{"lr":0.002} , "add_remaining_self_loops_supervision" : False, "remaining_supervision_self_loops" : "negatives", "early_stopping":True, "val_loss_fn":  losses_sum_closure([auc_loss, ap_loss])  },
 
-                                        "magnet_ohe": {"num_epochs":3000 ,  "optimizer_params":{"lr":3e-4}, "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "weight_decay":5e-4  },
 
                                         "magnet": {"num_epochs":3000 , "early_stopping":True, "val_loss_fn":  losses_sum_closure([ap_loss, auc_loss]), "optimizer_params":{"lr":1e-3, "weight_decay":5e-4,}  },
 
