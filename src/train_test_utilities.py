@@ -1,11 +1,7 @@
 import torch
 import numpy as np
-from utils import reset_parameters, print_model_parameters_names
 import copy
 import time
-from sklearn.metrics import roc_auc_score
-from torcheval.metrics.functional import binary_f1_score, binary_auroc
-import custom_losses
 import gc
 
 
@@ -65,13 +61,12 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs, lrsche
                 if val_dataset.edge_label_index.size(1) != 0:
                     val_losses_by_dataset.append(compute_loss_on_validation(val_dataset,  model, val_loss_fn, validation_on_device, device, use_sparse_representation))
 
-            # val_loss = compute_loss_on_validation(val_data,  model, val_loss_fn, device, use_sparse_representation)
+
 
             val_loss = None
             if val_loss_aggregation == "sum":
                 val_loss = np.sum(val_losses_by_dataset)
-                # if lrscheduler is not None:
-                #     lrscheduler.step(val_loss)
+
 
 
 
@@ -152,62 +147,6 @@ def compute_loss_on_validation(val_data, model, val_loss_fn,  validation_on_devi
 
     return val_loss
     
-
-
-# @torch.no_grad()
-# def evaluate_link_prediction(model, test_data, test_data_mrr = None, k = 30, device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') ):
-
-
-#     model.cpu()
-
-#     model.eval()
-
-#     # Test data split
-#     test_data_split = copy.copy(test_data).cpu()
-#     neg_mask = (test_data.edge_label == 0).cpu()
-
-#     test_data_split.pos_edge_label_index = test_data.edge_label_index[:,~neg_mask].cpu()
-#     test_data_split.neg_edge_label_index  = test_data.edge_label_index[:,neg_mask].cpu()
-#     test_data_split.pos_edge_label = test_data.edge_label[~neg_mask].cpu()
-#     test_data_split.neg_edge_label = test_data.edge_label[neg_mask].cpu()
-
-#     del test_data_split.edge_label
-#     del test_data_split.edge_label_index
-
-
-    
-#     # Test data rev
-#     test_data_rev_split = copy.copy(test_data_split).cpu()
-#     test_data_rev_split.neg_edge_label_index = test_data_rev_split.pos_edge_label_index[[1,0],:].cpu()
-#     test_data_rev_split.neg_edge_label = torch.zeros(test_data_rev_split.pos_edge_label.size(0)).cpu()
-
-#     # Test data rev
-#     test_data_rev = copy.copy(test_data_rev_split)
-#     test_data_rev.edge_label_index = torch.cat((test_data_rev.pos_edge_label_index, test_data_rev.neg_edge_label_index ), dim = 1).cpu()
-#     test_data_rev.edge_label = torch.cat((test_data_rev.pos_edge_label, test_data_rev.neg_edge_label ), dim = 0).cpu()
-
-#     del test_data_rev.pos_edge_label_index
-#     del test_data_rev.neg_edge_label_index
-#     del test_data_rev.pos_edge_label
-#     del test_data_rev.neg_edge_label
-
-
-#     logits_test_data = model(test_data).x.cpu()
-#     logits_test_data_rev = model(test_data_rev).x.cpu()
-
-
-#     hitsk = None
-#     if test_data_split.pos_edge_label.size(0) > 20:
-#         hitsk = custom_losses.hitsk(model, test_data_split, 20)
-
-#     out_dict =  {"AUC" : roc_auc_score(test_data.edge_label.cpu(), logits_test_data), 
-#             "hitsk" : hitsk ,
-#             "AP" : custom_losses.average_precision(model,test_data.cpu()),
-#             }
-    
-#     model = model.to(device)
-
-#     return out_dict
 
 
 

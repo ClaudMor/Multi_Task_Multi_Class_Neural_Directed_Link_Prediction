@@ -1,22 +1,15 @@
 import copy
 import numpy as np
 import torch
-import torch_sparse
-import torch_geometric as pyg
 from torch_geometric.data import Data
-from torch_geometric.utils import from_scipy_sparse_matrix, to_scipy_sparse_matrix, remove_self_loops, negative_sampling, to_dense_adj, add_remaining_self_loops, to_undirected, to_edge_index, degree
+from torch_geometric.utils import negative_sampling, add_remaining_self_loops, degree
 from torch_geometric.transforms import ToSparseTensor
 from sklearn.model_selection import train_test_split
 import input_data
 
-from split import RemoveReciprocalEdges, RemoveSelfLoops, GetSelfLoops
 from train_test_utilities import compute_loss_on_validation
 
-# # inputs
-# features_type = "OHE"
-# dataset_name = "cora"
-# add_remaining_self_loops_supervision = True
-# ##################
+
 
 
 def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loops_supervision, use_sparse_representation, validation_on_device, device):
@@ -73,20 +66,17 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
     positive_bidirectionals_edge_index = np.array(adj.multiply(adj.T).nonzero())
 
     positive_bidirectionals_one_way_edge_index_t = positive_bidirectionals_edge_index[:, positive_bidirectionals_edge_index[0,:] > positive_bidirectionals_edge_index[1,:] ].T
-    # positive_self_loops_edge_index_t = positive_bidirectionals_edge_index[:, positive_bidirectionals_edge_index[0,:] == positive_bidirectionals_edge_index[1,:] ].T
+
 
     num_positives_bidirectionals = positive_bidirectionals_one_way_edge_index_t.shape[0]
-    # num_positives_self_loops = positive_self_loops_edge_index_t.shape[0]
+
 
     num_positives_bidirectional_test =  int(num_positives_bidirectionals * 0.3)
-    # num_positives_self_loops_test =  int(num_positives_self_loops * 0.3)
+
 
     num_positives_bidirectional_val = int(num_positives_bidirectionals * 0.15)
 
-    # num_positives_bidirectional_train = int(num_positives_bidirectionals * (1. - 0.15 - 0.3))
-    # num_positives_bidirectional_val = int(num_positives_bidirectionals * 0.15)
-    # else:
-    #     num_positives_bidirectional_val =  int(num_positives_bidirectionals * 0.15)
+
 
 
     train_val_bidirectional_positives, test_bidirectional_positives = train_test_split(positive_bidirectionals_one_way_edge_index_t, test_size = num_positives_bidirectional_test, shuffle = True)
@@ -101,8 +91,6 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
 
     val_bidirectional_negatives = sample_positive_unidirectionals_edge_index_t[:num_positives_bidirectional_val, :]
     test_bidirectional_negatives = sample_positive_unidirectionals_edge_index_t[num_positives_bidirectional_val:, :]
-    # train_val_bidirectional_negatives, test_bidirectional_negatives = train_test_split(sample_positive_unidirectionals_edge_index_t, test_size = num_positives_bidirectional_test, shuffle = True)
-    # train_bidirectional_negatives, val_bidirectional_negatives = train_test_split(train_val_bidirectional_negatives, test_size = num_positives_bidirectional_val, shuffle = True)
 
 
     train_bidirectional_edge_label_index = torch.cat((
@@ -135,27 +123,22 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
 
 
     # train edge index
-    reciprocals_other_way = torch.tensor(positive_bidirectionals_edge_index[:, positive_bidirectionals_edge_index[0,:] <= positive_bidirectionals_edge_index[1,:] ]) # here we keep self loops #torch.tensor(positive_bidirectionals_edge_index_t.T).flip(dims = (0,))
+    reciprocals_other_way = torch.tensor(positive_bidirectionals_edge_index[:, positive_bidirectionals_edge_index[0,:] <= positive_bidirectionals_edge_index[1,:] ]) # here we keep self loops 
     train_edge_index = torch.cat((
         torch.tensor(train_directional_positives.T),
         torch.tensor(train_bidirectional_positives.T),
         reciprocals_other_way
-    ), dim = 1) #torch.tensor(np.array(adj.nonzero()))
+    ), dim = 1) 
 
     if add_remaining_self_loops_supervision:
         train_edge_index, _                     = add_remaining_self_loops(train_edge_index, num_nodes = num_nodes)
-        # previous_train_bidirectional_size = train_bidirectional_edge_label_index.size(1)
-        # train_bidirectional_edge_label_index, _ = add_remaining_self_loops(train_bidirectional_edge_label_index, num_nodes = num_nodes)
-        # num_self_loops_added = train_bidirectional_edge_label_index.size(1) - previous_train_bidirectional_size
-        # train_bidirectional_edge_label  = torch.cat(
-        #     (train_bidirectional_edge_label,
-        #     torch.ones(num_self_loops_added)), dim = 0)
+
 
     # general 
     train_general_edge_label_index = "full_graph"
     tosparse = ToSparseTensor()
     train_adj_t = tosparse(Data(edge_index = train_edge_index.to(dtype = torch.long), num_nodes = num_nodes)).adj_t.t() # NOT TRANSPOSED
-    train_general_edge_label = train_adj_t.to_dense()#.reshape(-1,1)
+    train_general_edge_label = train_adj_t.to_dense()
 
 
     val_test_general_negatives = negative_sampling(torch.tensor(adj.nonzero()), num_nodes = num_nodes, num_neg_samples = num_positives_directional_val + num_positives_directional_test + num_positives_bidirectional_val + num_positives_bidirectional_test)
@@ -200,19 +183,6 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
     test_data_bidirectional  = Data(x = x, edge_label = test_bidirectional_edge_label.reshape(-1,1),  edge_label_index=test_bidirectional_edge_label_index, edge_index = train_edge_index)
 
 
-    # train_data_general = Data(edge_label = train_general_edge_label.reshape(-1,1),  edge_label_index=train_general_edge_label_index,)
-    # val_data_general   = Data(edge_label = val_general_edge_label.reshape(-1,1),  edge_label_index=val_general_edge_label_index, )
-    # test_data_general  = Data(edge_label = test_general_edge_label.reshape(-1,1),  edge_label_index=test_general_edge_label_index)
-
-    # train_data_directional = Data(edge_label = train_directional_edge_label.reshape(-1,1),  edge_label_index=train_directional_edge_label_index)
-    # val_data_directional   = Data( edge_label = val_directional_edge_label.reshape(-1,1),  edge_label_index=val_directional_edge_label_index)
-    # test_data_directional  = Data(edge_label = test_directional_edge_label.reshape(-1,1),  edge_label_index=test_directional_edge_label_index)
-
-
-    # train_data_bidirectional = Data( edge_label = train_bidirectional_edge_label.reshape(-1,1),  edge_label_index=train_bidirectional_edge_label_index)
-    # val_data_bidirectional   = Data( edge_label = val_bidirectional_edge_label.reshape(-1,1),  edge_label_index=val_bidirectional_edge_label_index)
-    # test_data_bidirectional  = Data(edge_label = test_bidirectional_edge_label.reshape(-1,1),  edge_label_index=test_bidirectional_edge_label_index)
-
     if not validation_on_device:
 
         return train_data_general.to(device), train_data_directional.to(device), train_data_bidirectional.to(device), val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional
@@ -222,24 +192,22 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
 
 
 
-def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, model, train_loss_fn, train_loss_fn_directional, train_loss_fn_bidirectional, optimizer,device, num_epochs, lrscheduler = None, early_stopping = False, val_loss_fn = None, val_datasets = None, val_loss_aggregation = "sum", patience = None, use_sparse_representation = False, retrain_data = None, epoch_print_freq = 10, validation_on_device = True): # , train_idxs = None, val_idxs = None, retrain_idxs = None
+def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, model, train_loss_fn, train_loss_fn_directional, train_loss_fn_bidirectional, optimizer,device, num_epochs, lrscheduler = None, early_stopping = False, val_loss_fn = None, val_datasets = None, val_loss_aggregation = "sum", patience = None, use_sparse_representation = False, retrain_data = None, epoch_print_freq = 10, validation_on_device = True):
     
     model.train()
-    # reset_parameters(model)
-    # optimizer = _optimizer.__class__(model.parameters(), **_optimizer.defaults)
+
 
     initial_model_state_dict = None 
-    # initial_optimizer_state_dict = None
+
     if early_stopping:
         initial_model_state_dict = copy.deepcopy(model.state_dict())
-        # initial_optimizer_state_dict = optimizer.state_dict()
+
     if lrscheduler is not None:
         initial_lrscheduler_state_dict = copy.deepcopy(lrscheduler.state_dict())
 
 
     
     ES_counter = 0
-    # lr_counter = 0
     ES_loss_previous_epoch = torch.tensor(0)
     val_losses = []
     train_losses = []
@@ -272,8 +240,6 @@ def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, 
         loss.backward()
         optimizer.step()
 
-        # if lrscheduler is not None:
-        #     lrscheduler.step(loss)
 
         
         if i % epoch_print_freq == 0:
@@ -287,31 +253,25 @@ def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, 
                 if val_dataset.edge_label_index.size(1) != 0:
                     val_losses_by_dataset.append(compute_loss_on_validation(val_dataset,  model, val_loss_fn, validation_on_device, device, use_sparse_representation))
 
-            # val_loss = compute_loss_on_validation(val_data,  model, val_loss_fn, device, use_sparse_representation)
+
 
             val_loss = None
             if val_loss_aggregation == "sum":
                 val_loss = np.sum(val_losses_by_dataset)
-                # if lrscheduler is not None:
-                #     lrscheduler.step(val_loss)
+
 
 
 
             if i>0 and early_stopping:
                 if any(val_loss.item() >= previous_val_loss for previous_val_loss in val_losses): 
                     ES_counter += 1
-                    # lr_counter += 1
+
                 else:
                     ES_counter = 0
-                    # lr_counter = 0
+
                     if retrain_data is None:
                         best_model_dict = copy.deepcopy(model.state_dict())
 
-                # if lr_counter > lrscheduler.patience:
-                #     print("reducing lr...")
-                #     model.load_state_dict(best_model_dict)
-                #     lrscheduler._reduce_lr(i)
-                #     lr_counter = 0
                 if ES_counter > patience:
                     best_number_of_epochs = np.argmin(val_losses) + 1
                     print(f"val_losses = {val_losses[-10:]}, val_loss = {val_loss.item()},  ES_counter = {ES_counter} \n BREAKING. The best number of epochs is {best_number_of_epochs}")
@@ -329,9 +289,6 @@ def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, 
 
     
     if early_stopping and retrain_data is None:
-        # print(f"best_model_dict = {best_model_dict}")
-        # print(f"model parameters = {print_model_parameters_names(model)}")
-        # model.forward(train_data)
         model.load_state_dict(best_model_dict)
 
     elif early_stopping and retrain_data is not None:
@@ -342,7 +299,6 @@ def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, 
         print(f"\nRetraining on {best_number_of_epochs} epochs...\n")
 
         model.load_state_dict(initial_model_state_dict)
-        #optimizer.load_state_dict(initial_optimizer_state_dict)
         optimizer = optimizer.__class__(model.parameters(), **optimizer.defaults)
         if lrscheduler is not None:
             lrscheduler.load_state_dict(initial_lrscheduler_state_dict)

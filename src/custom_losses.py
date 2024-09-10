@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch.nn import Module
-from torch.nn.functional import sigmoid
 import copy
 from sklearn.metrics import average_precision_score, roc_auc_score
 
@@ -24,7 +23,6 @@ def compute_hitsk(y_pred_pos, y_pred_neg, k):
 
 
 def aucroc(logits, ground_truths):
-    # print(f"logits = {logits}")
     return roc_auc_score(ground_truths.cpu(), logits.cpu())
 
 def average_precision(logits, ground_truths):
@@ -32,10 +30,10 @@ def average_precision(logits, ground_truths):
 
 
 def auc_loss(logits, ground_truths):
-    return 1. - aucroc(logits, ground_truths) #roc_auc_score(ground_truths.cpu(), logits.x.cpu())
+    return 1. - aucroc(logits, ground_truths)
 
 def ap_loss(logits, ground_truths):
-    return 1. -  average_precision(logits, ground_truths) #average_precision_score(ground_truths.cpu().detach().numpy(), logits.x.cpu().detach().numpy()) 
+    return 1. -  average_precision(logits, ground_truths)
 
 def losses_sum_closure(losses):
     

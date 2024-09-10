@@ -60,7 +60,7 @@ def get_sourcetarget_gae_multiclass(input_dimension, hidden_dimension, output_di
                         ]
 
 
-    # encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
+
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwarg) for unwrapped_layers_kwarg in unwrapped_layers_kwargs])
     decoder = DecoderSourceTargetMulticlass(test_val_binary = True)
     return Sequential(encoder, decoder)
@@ -205,7 +205,7 @@ def get_mlp_gae_multiclass(input_dimension, hidden_dimension, output_dimension, 
 
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
-    decoder = DecoderLinear_for_EffectiveLP_multiclass(output_dimension, 1, bias = bias_decoder, dropout = dropout) #DecoderMLPMulticlass(output_dimension, hidden_dim_dec, test_val_binary = test_val_binary, device = device)
+    decoder = DecoderLinear_for_EffectiveLP_multiclass(output_dimension, 1, bias = bias_decoder, dropout = dropout)
     return Sequential(encoder, decoder)
 
 
@@ -260,7 +260,7 @@ def get_digae(input_dimension, hidden_dimension, output_dimension, alpha_init, b
 def get_digae_multiclass(input_dimension, hidden_dimension, output_dimension, alpha_init, beta_init, use_sparse_representation, device, test_val_binary = True):
 
     unwrapped_layers_kwargs = [
-                        {"layer":DiGAE( alpha_init, beta_init, input_dimension, hidden_dimension, output_dimension), # alpha_init, beta_init, input_dimension, hidden_dimension, output_dimension
+                        {"layer":DiGAE( alpha_init, beta_init, input_dimension, hidden_dimension, output_dimension), 
                         "normalization_before_activation": None, 
                         "activation": None, 
                         "normalization_after_activation": None, 
@@ -281,7 +281,7 @@ def get_digae_multiclass(input_dimension, hidden_dimension, output_dimension, al
 def get_magnet(input_dimension, hidden_dimension, q, K, activation, num_layers, trainable_q, dropout, cached, bias_decoder, use_sparse_representation, device):
 
     encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, ) # sparse = use_sparse_representation
-    decoder = DecoderLinear_for_EffectiveLP(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout)  #  device = device
+    decoder = DecoderLinear_for_EffectiveLP(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) 
 
     return Sequential(encoder, decoder).to(device)
     
@@ -289,7 +289,7 @@ def get_magnet(input_dimension, hidden_dimension, q, K, activation, num_layers, 
 
 def get_magnet_multiclass(input_dimension, hidden_dimension, q, K, activation, num_layers, trainable_q, dropout, cached, bias_decoder, use_sparse_representation, device):
 
-    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, sparse = use_sparse_representation) #sparse = use_sparse_representation
+    encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, sparse = use_sparse_representation) 
     decoder = DecoderLinear_for_EffectiveLP_multiclass(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) 
 
     return Sequential(encoder, decoder).to(device)
@@ -332,7 +332,7 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "gravity_gae_multiclass": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True, "CLAMP" :None, "l": 1. , "train_l":True},
                                             
-                                            "sourcetarget_gae_multiclass": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True}, # 64 32
+                                            "sourcetarget_gae_multiclass": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True}, 
                                             
 
                                             "sourcetarget_gae": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True},
@@ -341,7 +341,7 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "mlp_gae_multiclass": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True,  "bias_decoder": True, "dropout": 0.5},
 
-                                            "mlp_gae": {"input_dimension":3327 ,"hidden_dimension": 64, "output_dimension":32, "bias_decoder": True, "dropout": 0.5, "use_sparse_representation": True }, # "hidden_dim_dec":16, "test_val_binary": True
+                                            "mlp_gae": {"input_dimension":3327 ,"hidden_dimension": 64, "output_dimension":32, "bias_decoder": True, "dropout": 0.5, "use_sparse_representation": True }, 
 
                                             "digae": {"input_dimension":3327 , "hidden_dimension": 64, "output_dimension":32, "alpha_init":0.5, "beta_init":0.5, "use_sparse_representation": True, "test_val_binary": True},
 

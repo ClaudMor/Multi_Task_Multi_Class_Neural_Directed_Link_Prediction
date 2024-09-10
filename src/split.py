@@ -20,9 +20,6 @@ import input_data
 
 
 def GetSelfLoops(edge_index):
-    # edge_index = copy.deepcopy(_edge_index)
-    # removed_self_loops = None
-    # if hasattr(data, "edge_index"):
     self_loops = edge_index[:, edge_index[0, :] ==  edge_index[1, :] ]
 
     return self_loops
@@ -30,10 +27,7 @@ def GetSelfLoops(edge_index):
 
 def RemoveSelfLoops(_edge_index):
     edge_index = copy.deepcopy(_edge_index)
-    # removed_self_loops = None
-    # if hasattr(data, "edge_index"):
     removed_self_loops = edge_index[:, edge_index[0, :] ==  edge_index[1, :] ]
-
     return remove_self_loops(edge_index), removed_self_loops
 
 
@@ -42,14 +36,14 @@ def RemoveReciprocalEdges(_edge_index, return_removed_reciprocal_edges = False):
     # Store the edge_index with reciprocal links for later use 
     # original_edge_index = edge_index
     edge_index_symm = to_undirected(edge_index)
-    adj_sparse_symm        = to_scipy_sparse_matrix(edge_index_symm) #to_dense_adj(edge_index_symm).squeeze()
+    adj_sparse_symm        = to_scipy_sparse_matrix(edge_index_symm) 
     adj_sparse = to_scipy_sparse_matrix(edge_index)
     adj_tilde       =  (adj_sparse_symm - adj_sparse).T
     adj_tilde.eliminate_zeros()
     # Prevent numerical issues
     # adj_tilde[adj_tilde < 0.5] = 0
     # removed_edges = torch.nonzero(adj_symm - ).t()
-    edge_index_no_reciprocal, _ = from_scipy_sparse_matrix(adj_tilde) #adj_tilde.indices() #torch.nonzero(adj_tilde).t()
+    edge_index_no_reciprocal, _ = from_scipy_sparse_matrix(adj_tilde) 
     edge_index = edge_index_no_reciprocal
 
     if not return_removed_reciprocal_edges:
@@ -235,77 +229,6 @@ def get_split(dataset_name, features_type, add_remaining_self_loops_supervision,
     return train_data.to(device), val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional
 
 
-# # Assumes self-loops have already been added
-# def get_multicass_lp_edge_label_from_sparse_adjt(_data, split, remaining_supervision_self_loops, device):
-#     # 0. = negative bidirectional
-#     # 1. = positives unidirectional
-#     # 2. = positives bidirectional
-#     # 3. = negatives unidirectional
-#     data = copy.deepcopy(_data)
-#     if hasattr(data, "adj_t"):
-#         edge_index, _ = to_edge_index(data.adj_t)
-#     else:
-#         edge_index = data.edge_index
-#         data.adj_t = ToSparseTensor()(data).adj_t.t()
-
-#     dense_adj = data.adj_t.to_dense()
-
-
-
-#     if data.edge_label_index in ["full_graph"] and split == "train":
-        
-#         # if hasattr(data, "adj_t"):
-#         #     edge_index, _ = to_edge_index(data.adj_t)
-#         # else:
-#         #     edge_index = data.edge_index
-
-#         edge_index_wout_reciprocals, removed_reciprocals = RemoveReciprocalEdges(edge_index, return_removed_reciprocal_edges = True)
-
-#         # removed_reciprocals_wout_self_loops, _ = remove_self_loops(removed_reciprocals)
-
-        
-
-#         if remaining_supervision_self_loops == "ignore":
-#             dense_adj.fill_diagonal_(4)
-#         elif remaining_supervision_self_loops == "positives":
-#             dense_adj.fill_diagonal_(2)
-#         elif remaining_supervision_self_loops == "negatives":
-#             dense_adj.fill_diagonal_(0)
-
-#         dense_adj[removed_reciprocals[0], removed_reciprocals[1]] = 2
-
-#         dense_adj[edge_index_wout_reciprocals[1], edge_index_wout_reciprocals[0]] = 3
-
-#         return dense_adj.reshape(-1).type(torch.long)
-
-
-
-#     # we might use reverses of data.edge_label_index[0] instead of the whole dense_adj to relabel positive edges (it would be more efficient).
-#     elif torch.is_tensor(data.edge_label_index) and split in ["val", "test"] :
-
-#         dense_adj[data.edge_label_index[0], data.edge_label_index[1]] = data.edge_label
-#         reverses_binary_labels = dense_adj[data.edge_label_index[1], data.edge_label_index[0]]
-
-#         new_edge_labels = []
-
-#         for edge, edge_label, reverse_binary_label in zip(data.edge_label_index.t(), data.edge_label, reverses_binary_labels):
-#             if edge[0] == edge[1]:
-#                 new_edge_labels.append(4)
-#             elif edge_label == 1 and reverse_binary_label == 1 and edge[0] != edge[1]:
-#                 new_edge_labels.append(2)
-#             elif edge_label == 1 and reverse_binary_label == 0:
-#                 new_edge_labels.append(1)
-#             elif edge_label == 0 and reverse_binary_label == 1:
-#                 new_edge_labels.append(3)
-#             elif edge_label == 0 and reverse_binary_label == 0:
-#                 new_edge_labels.append(0)
-        
-#         return torch.tensor(new_edge_labels).reshape(-1).type(torch.long).to(device)
-
-
-
-#     return data
-
 
 
 
@@ -319,34 +242,13 @@ def get_multicass_lp_edge_label_from_sparse_adjt(_data, split, remaining_supervi
 
     data = copy.deepcopy(_data)
 
-    # if hasattr(data, "adj_t"):
-    #     edge_index, _ = to_edge_index(data.adj_t)
-    # else:
-    #     edge_index = data.edge_index
-    #     data.adj_t = ToSparseTensor()(data).adj_t.t()
-
-    # dense_adj = data.adj_t.to_dense()
-
-
-
-    # if data.edge_label_index in ["full_graph"] and split == "train":
-
     dense_adj = data.edge_label.reshape(data.num_nodes, data.num_nodes)
 
     edge_label_index, _ = to_edge_index(torch_sparse.SparseTensor.from_dense(dense_adj))
 
 
-    
-    # if hasattr(data, "adj_t"):
-    #     edge_index, _ = to_edge_index(data.adj_t)
-    # else:
-    #     edge_index = data.edge_index
-
     edge_label_index_wout_reciprocals, removed_reciprocals = RemoveReciprocalEdges(edge_label_index, return_removed_reciprocal_edges = True)
 
-    # removed_reciprocals_wout_self_loops, _ = remove_self_loops(removed_reciprocals)
-
-    
 
     if remaining_supervision_self_loops == "ignore":
         dense_adj.fill_diagonal_(4)
@@ -361,32 +263,4 @@ def get_multicass_lp_edge_label_from_sparse_adjt(_data, split, remaining_supervi
 
     return dense_adj.reshape(-1).type(torch.long)
 
-    #     # data.edge_label = dense_adj.reshape(-1).type(torch.long)
 
-    # # we might use reverses of data.edge_label_index[0] instead of the whole dense_adj to relabel positive edges (it would be more efficient).
-    # elif torch.is_tensor(data.edge_label_index) and split in ["val", "test"] :
-
-    #     dense_adj[data.edge_label_index[0], data.edge_label_index[1]] = data.edge_label
-    #     reverses_binary_labels = dense_adj[data.edge_label_index[1], data.edge_label_index[0]]
-
-    #     new_edge_labels = []
-
-    #     for edge, edge_label, reverse_binary_label in zip(data.edge_label_index.t(), data.edge_label, reverses_binary_labels):
-    #         if edge[0] == edge[1]:
-    #             new_edge_labels.append(4)
-    #         elif edge_label == 1 and reverse_binary_label == 1 and edge[0] != edge[1]:
-    #             new_edge_labels.append(2)
-    #         elif edge_label == 1 and reverse_binary_label == 0:
-    #             new_edge_labels.append(1)
-    #         elif edge_label == 0 and reverse_binary_label == 1:
-    #             new_edge_labels.append(3)
-    #         elif edge_label == 0 and reverse_binary_label == 0:
-    #             new_edge_labels.append(0)
-        
-    #     return torch.tensor(new_edge_labels).reshape(-1).type(torch.long).to(device)
-
-    #     # data.edge_label = torch.tensor(new_edge_labels).reshape(-1).type(torch.long).to(device)
-
-
-
-    # return data

@@ -11,7 +11,7 @@ class Conv(MessagePassing):
 
     def __init__(self, in_channels, out_channels):
         super().__init__(aggr = "mean")
-        self.W = LazyLinear(out_channels, bias = False) # in_channels,
+        self.W = LazyLinear(out_channels, bias = False)
 
     def message_and_aggregate(self, adj_t, x):
         return torch_sparse.matmul(adj_t, x, reduce=self.aggr)

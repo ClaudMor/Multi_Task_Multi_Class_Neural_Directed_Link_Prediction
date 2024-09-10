@@ -12,7 +12,6 @@ def reset_parameters(module):
                 print(f"resetting {module}")
                 module.reset_parameters()
     for layer in module.children():
-            # print(f"layer 1= {layer}")
             if hasattr(layer, 'reset_parameters'):
                 print(f"resetting {layer}")
                 layer.reset_parameters()

@@ -20,7 +20,7 @@ def w_norm(coeffs, grad_general_norm, grad_dir_norm, grad_bidir_norm):
 
 
 
-def train_3_tasks_multiobjective(train_data_general, train_data_directional, train_data_bidirectional, model, train_loss_general_fn, train_loss_fn_directional, train_loss_fn_bidirectional, optimizer,device, num_epochs, lrscheduler = None, early_stopping = False, val_loss_fn = None, validation_on_device = True, val_datasets = None, val_loss_aggregation = "sum", patience = None, use_sparse_representation = False, retrain_data = None, epoch_print_freq = 10): # , train_idxs = None, val_idxs = None, retrain_idxs = None
+def train_3_tasks_multiobjective(train_data_general, train_data_directional, train_data_bidirectional, model, train_loss_general_fn, train_loss_fn_directional, train_loss_fn_bidirectional, optimizer,device, num_epochs, lrscheduler = None, early_stopping = False, val_loss_fn = None, validation_on_device = True, val_datasets = None, val_loss_aggregation = "sum", patience = None, use_sparse_representation = False, retrain_data = None, epoch_print_freq = 10):
     
     model.train()
 

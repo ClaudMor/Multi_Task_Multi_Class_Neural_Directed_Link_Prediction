@@ -35,7 +35,6 @@ class LayerWrapper(Module):
         if self.normalization_before_activation is not None:
             new_batch.x = self.normalization_before_activation(new_batch.x)
         if self.activation is not None:
-            # ic(new_batch.x)
             new_batch.x = self.activation(new_batch.x)
         if self.normalization_after_activation is not None:
             new_batch.x =  self.normalization_after_activation(new_batch.x)

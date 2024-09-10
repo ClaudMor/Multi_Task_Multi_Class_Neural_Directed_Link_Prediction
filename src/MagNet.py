@@ -8,8 +8,7 @@ import torch.nn.functional as F
 from torch_geometric.utils import degree
 from torch_geometric_signed_directed.nn.directed.complex_relu import complex_relu_layer
 from torch_geometric_signed_directed.nn.directed.MagNetConv import MagNetConv
-# from _MagnetConv import MagNetConv
-from GNN import DecoderLinear_for_EffectiveLP
+
 
 
 class MagNet_link_prediction(nn.Module):
@@ -54,18 +53,18 @@ class MagNet_link_prediction(nn.Module):
 
         for _ in range(1, layer):
             chebs.append(MagNetConv(in_channels=hidden, out_channels=hidden, K=K,
-                                    q=q, trainable_q=trainable_q, normalization=normalization, cached=cached)) # sparse= sparse
+                                    q=q, trainable_q=trainable_q, normalization=normalization, cached=cached)) 
 
         self.Chebs = chebs
-        # self.linear = DecoderLinear_for_EffectiveLP(hidden*4, label_dim, bias = True) #nn.Linear(hidden*4, label_dim)
+
         self.dropout = dropout
 
     def reset_parameters(self):
         for cheb in self.Chebs:
             cheb.reset_parameters()
-        # self.linear.reset_parameters()
 
-    def forward(self, batch) -> torch.FloatTensor: # real: torch.FloatTensor, imag: torch.FloatTensor, edge_index: torch.LongTensor, query_edges: torch.LongTensor, edge_weight: Optional[torch.LongTensor] = None
+
+    def forward(self, batch) -> torch.FloatTensor: 
             """
             Making a forward pass of the MagNet node classification model.
 
@@ -78,8 +77,7 @@ class MagNet_link_prediction(nn.Module):
                 * log_prob (PyTorch Float Tensor) - Logarithmic class probabilities for all nodes, with shape (num_nodes, num_classes).
             """
             new_batch = copy.copy(batch)
-            # out_deg = degree(new_batch.edge_index[0,:], num_nodes = new_batch.x.size(0))
-            # in_deg = degree(new_batch.edge_index[1,:], num_nodes = new_batch.x.size(0))
+
             real = copy.copy(new_batch.x)
             imag = torch.clone(real)
             for cheb in self.Chebs:
@@ -87,17 +85,14 @@ class MagNet_link_prediction(nn.Module):
                 if self.activation:
                     real, imag = self.complex_relu(real, imag)
 
-            # x = torch.cat((real[query_edges[:, 0]], real[query_edges[:, 1]],
-            #               imag[query_edges[:, 0]], imag[query_edges[:, 1]]), dim=-1)
+
             
             x = torch.cat((real,imag), dim = 1)
-            # print(f"real.shape = {real.shape}, imag.shape = {imag.shape}, x.shape = {x.shape}")
+
             
             if self.dropout > 0:
                 x = F.dropout(x, self.dropout, training=self.training)
 
             new_batch.x = x
 
-            # new_batch.x = torch.log(torch.nn.functional.sigmoid(self.linear(new_batch)))
-            # x = F.log_softmax(x, dim=1)
             return new_batch
