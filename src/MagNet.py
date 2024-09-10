@@ -46,7 +46,7 @@ class MagNet_link_prediction(nn.Module):
 
         chebs = nn.ModuleList()
         chebs.append(MagNetConv(in_channels=num_features, out_channels=hidden, K=K,
-                                q=q, trainable_q=trainable_q, normalization=normalization, cached=cached,)) #sparse= sparse
+                                q=q, trainable_q=trainable_q, normalization=normalization, cached=cached)) #
         self.normalization = normalization
         self.activation = activation
         if self.activation:
@@ -54,7 +54,7 @@ class MagNet_link_prediction(nn.Module):
 
         for _ in range(1, layer):
             chebs.append(MagNetConv(in_channels=hidden, out_channels=hidden, K=K,
-                                    q=q, trainable_q=trainable_q, normalization=normalization, cached=cached, )) # sparse= sparse
+                                    q=q, trainable_q=trainable_q, normalization=normalization, cached=cached)) # sparse= sparse
 
         self.Chebs = chebs
         # self.linear = DecoderLinear_for_EffectiveLP(hidden*4, label_dim, bias = True) #nn.Linear(hidden*4, label_dim)

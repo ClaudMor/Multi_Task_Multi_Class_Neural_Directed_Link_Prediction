@@ -377,7 +377,7 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True},  # cannot cache and train q at the same time
 
-                                            "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": True, "use_sparse_representation":False, "bias_decoder":True}
+                                            "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}
                                          
                                         }
 
