@@ -27,7 +27,7 @@ seed_everything(12345)
 # Please set the parameters below
 dataset = "cora" # one of "cora","citeseer","google"
 training_framework = "baseline" # One of "baseline", "multiclass","scalarization","multiobjective"
-model_name = "gravity_gae"
+model_name = "gravity_gae" # One of "gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"
 device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Detects gpu if available
 num_runs = 5     # Number of dataset splits to average over
 
