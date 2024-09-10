@@ -359,7 +359,7 @@ models_suggested_parameters_sets = {"cora":{
 
                                             "gravity_gae": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True, "CLAMP" :None, "l": 10. , "train_l":True},
 
-                                            "gravity_gae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True, "CLAMP" :None, "l": 10. , "train_l":True},
+                                            "gravity_gae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True, "CLAMP" :None, "l": 0.1 , "train_l":True},
 
 
                                             "sourcetarget_gae": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True},
