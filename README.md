@@ -1,6 +1,6 @@
 # Multi_Task_Multi_Class_Neural_Directed_Link_Prediction
 
-This is the repository associated to the paper ???
+This is the repository associated with the paper "Multi-Class and Multi-Task Strategies for Neural Directed Link Prediction".
 
 ## How to run
 
