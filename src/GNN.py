@@ -144,6 +144,7 @@ class DecoderGravityMulticlass(Module):
             r1r2 = torch.matmul(r, r.t())
 
             r2 = norm - 2*r1r2 + norm.t() 
+            r2 = r2.clamp(min = -self.EPS)
             logr2 = torch.log(r2 + self.EPS)
 
             if self.CLAMP is not None:
