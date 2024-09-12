@@ -2,6 +2,7 @@
 ############ FROM HERE #####################
 import sys
 import copy
+import argparse
 sys.path.insert(0, './src')
 
 import numpy as np
@@ -22,12 +23,18 @@ import sys
 from IPython.core.ultratb import ColorTB
 sys.excepthook = ColorTB()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset", type=str, help="Dataset name (cora, citeseer, google)")
+parser.add_argument("--strategy", type=str, help="Training framework (baseline, multiclass, scalarization, multiobjective)")
+parser.add_argument("--model", type=str, help="Model name (gravity_gae, sourcetarget_gae, mlp_gae, digae, magnet)")
+args = parser.parse_args()
+
 seed_everything(12345)
 
 # Please set the parameters below
-dataset = "cora" # one of "cora","citeseer","google"
-training_framework = "baseline" # One of "baseline", "multiclass","scalarization","multiobjective"
-model_name = "gravity_gae" # One of "gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"
+dataset = args.dataset # one of "cora","citeseer","google"
+training_framework = args.strategy # One of "baseline", "multiclass","scalarization","multiobjective"
+model_name = args.model # One of "gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"
 device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Detects gpu if available
 num_runs = 5     # Number of dataset splits to average over
 
