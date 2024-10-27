@@ -162,16 +162,28 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
         x = torch.cat((in_deg.reshape(-1,1),out_deg.reshape(-1,1)), dim = 1)
     elif features_type == "original":
         x = features
+
+    
+    all_destinations = torch.arange(num_nodes, dtype = torch.float)
+    neg_destinations = torch.tensor([torch.tensor(all_destinations[(all_destinations.unsqueeze(1) != train_edge_index[:, train_edge_index[0, :] == i][1]).all(dim = 1)]).multinomial(100, replacement=False).tolist()  for i in test_general_edge_label_index[0,:]])
+    test_general_neg_edge_label_index = torch.stack((test_general_edge_label_index[0, :].reshape(-1,1).expand(-1,100), neg_destinations), dim=1)
+
+
     
     if use_sparse_representation:
         train_edge_index = train_adj_t
     else:
         train_edge_index = train_edge_index.to(torch.long)
 
+    # test_general_neg_edge_label_index = torch.tensor([negative_sampling(train_edge_index[:, train_edge_index[0, :] == i], num_nodes = num_nodes, num_neg_samples = 100).tolist() for i in train_edge_index[0,:]])
+    # to_edge_index(train_data_directional.edge_index)[0].cpu()
+
+
 
     train_data_general = Data(x = x, edge_label = train_general_edge_label.reshape(-1,1),  edge_label_index=train_general_edge_label_index, edge_index = train_edge_index)
     val_data_general   = Data(x = x, edge_label = val_general_edge_label.reshape(-1,1),  edge_label_index=val_general_edge_label_index, edge_index = train_edge_index)
     test_data_general  = Data(x = x, edge_label = test_general_edge_label.reshape(-1,1),  edge_label_index=test_general_edge_label_index, edge_index = train_edge_index)
+    test_data_general_hitsk_mrr  = Data(x = x, pos_edge_label_index = test_general_edge_label_index, neg_edge_label_index = test_general_neg_edge_label_index, edge_index = train_edge_index)
 
     train_data_directional = Data(x = x, edge_label = train_directional_edge_label.reshape(-1,1),  edge_label_index=train_directional_edge_label_index, edge_index = train_edge_index)
     val_data_directional   = Data(x = x, edge_label = val_directional_edge_label.reshape(-1,1),  edge_label_index=val_directional_edge_label_index, edge_index = train_edge_index)
@@ -187,7 +199,7 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
 
         return train_data_general.to(device), train_data_directional.to(device), train_data_bidirectional.to(device), val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional
     else:
-        return train_data_general.to(device), train_data_directional.to(device), train_data_bidirectional.to(device), val_data_general.to(device), val_data_directional.to(device), val_data_bidirectional.to(device), test_data_general, test_data_directional, test_data_bidirectional
+        return train_data_general.to(device), train_data_directional.to(device), train_data_bidirectional.to(device), val_data_general.to(device), val_data_directional.to(device), val_data_bidirectional.to(device), test_data_general, test_data_directional, test_data_bidirectional, test_data_general_hitsk_mrr
 
 
 

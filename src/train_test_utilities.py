@@ -3,6 +3,8 @@ import numpy as np
 import copy
 import time
 import gc
+from torch_geometric.data import Data
+from custom_losses import _eval_mrr
 
 
 
@@ -151,7 +153,7 @@ def compute_loss_on_validation(val_data, model, val_loss_fn,  validation_on_devi
 
 
 @torch.no_grad()
-def evaluate_link_prediction(model, test_data, metrics_dict, test_data_on_device = False, device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') ):
+def evaluate_link_prediction(model, test_data, metrics_dict, test_data_hitsk_mrr = None, test_data_on_device = False, device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') ):
 
     if not test_data_on_device:
         model.cpu()
@@ -164,6 +166,11 @@ def evaluate_link_prediction(model, test_data, metrics_dict, test_data_on_device
     out_dict = {}
     for metric_name, metric in metrics_dict.items():
         out_dict[metric_name] = metric(logits_test_data.reshape(-1).detach(), test_data.edge_label.reshape(-1).detach())
+
+    if test_data_hitsk_mrr is not None:
+        y_pred_pos = model(Data(x = test_data_hitsk_mrr.x, edge_label_index = test_data_hitsk_mrr.pos_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)).x.cpu().squeeze()
+        y_pred_neg = torch.tensor([model(Data(x = test_data_hitsk_mrr.x, edge_label_index = neg_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)).x.tolist() for neg_edge_label_index in test_data_hitsk_mrr.neg_edge_label_index ]).squeeze()
+        out_dict = {**out_dict, **_eval_mrr(y_pred_pos,y_pred_neg )}
 
 
     if not test_data_on_device:

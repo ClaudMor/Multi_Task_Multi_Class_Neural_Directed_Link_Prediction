@@ -4,8 +4,34 @@ from torch.nn import Module
 import copy
 from sklearn.metrics import average_precision_score, roc_auc_score
 
+# taken from https://github.com/snap-stanford/ogb/blob/master/ogb/linkproppred/evaluate.py
+def _eval_mrr(y_pred_pos, y_pred_neg):
+        '''
+            compute mrr
+            y_pred_neg is an array with shape (batch size, num_entities_neg).
+            y_pred_pos is an array with shape (batch size, )
+        '''
 
 
+        # if type_info == 'torch':
+        # calculate ranks
+        y_pred_pos = y_pred_pos.view(-1, 1)
+        # optimistic rank: "how many negatives have a larger score than the positive?"
+        # ~> the positive is ranked first among those with equal score
+        optimistic_rank = (y_pred_neg > y_pred_pos).sum(dim=1)
+        # pessimistic rank: "how many negatives have at least the positive score?"
+        # ~> the positive is ranked last among those with equal score
+        pessimistic_rank = (y_pred_neg >= y_pred_pos).sum(dim=1)
+        ranking_list = 0.5 * (optimistic_rank + pessimistic_rank) + 1
+        hits1_list = (ranking_list <= 1).to(torch.float)
+        hits3_list = (ranking_list <= 3).to(torch.float)
+        hits10_list = (ranking_list <= 10).to(torch.float)
+        mrr_list = 1./ranking_list.to(torch.float)
+
+        return {'hits@1': hits1_list.mean().item(),
+                    'hits@3': hits3_list.mean().item(),
+                    'hits@10': hits10_list.mean().item(),
+                    'mrr': mrr_list.mean().item()}
 
 
 def hitsk(model, test_data_split, k):
