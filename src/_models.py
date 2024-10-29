@@ -375,7 +375,7 @@ models_suggested_parameters_sets = {"cora":{
                                             "digae_multiclass": {"input_dimension":15763 , "hidden_dimension": 64, "output_dimension":32, "alpha_init":0.5, "beta_init":0.5, "use_sparse_representation": True, "test_val_binary": True},
 
 
-                                            "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":True, "bias_decoder":True},  # cannot cache and train q at the same time
+                                            "magnet": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True},  # cannot cache and train q at the same time
 
                                             "magnet_multiclass": {"input_dimension":2 , "hidden_dimension": 16, "q":0.05, "K":2, "activation":True, "num_layers":2, "trainable_q":False, "dropout": 0.5, "cached": False, "use_sparse_representation":False, "bias_decoder":True}
                                          

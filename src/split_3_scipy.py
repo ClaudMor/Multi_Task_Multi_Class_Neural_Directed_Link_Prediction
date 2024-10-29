@@ -167,6 +167,7 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
     all_destinations = torch.arange(num_nodes, dtype = torch.float)
     neg_destinations = torch.tensor([torch.tensor(all_destinations[(all_destinations.unsqueeze(1) != train_edge_index[:, train_edge_index[0, :] == i][1]).all(dim = 1)]).multinomial(100, replacement=False).tolist()  for i in test_general_edge_label_index[0,:]])
     test_general_neg_edge_label_index = torch.stack((test_general_edge_label_index[0, :].reshape(-1,1).expand(-1,100), neg_destinations), dim=1)
+    test_general_neg_edge_label_index = torch.cat(torch.split(test_general_neg_edge_label_index, split_size_or_sections=1), dim = 2).squeeze()
 
 
     

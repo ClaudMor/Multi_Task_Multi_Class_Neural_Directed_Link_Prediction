@@ -169,7 +169,9 @@ def evaluate_link_prediction(model, test_data, metrics_dict, test_data_hitsk_mrr
 
     if test_data_hitsk_mrr is not None:
         y_pred_pos = model(Data(x = test_data_hitsk_mrr.x, edge_label_index = test_data_hitsk_mrr.pos_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)).x.cpu().squeeze()
-        y_pred_neg = torch.tensor([model(Data(x = test_data_hitsk_mrr.x, edge_label_index = neg_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)).x.tolist() for neg_edge_label_index in test_data_hitsk_mrr.neg_edge_label_index ]).squeeze()
+        test_data_general_hitsk_mrr_neg = Data(x = test_data_hitsk_mrr.x, edge_label_index = test_data_hitsk_mrr.neg_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)
+        y_pred_neg = model(test_data_general_hitsk_mrr_neg).x.reshape(-1, 100) #torch.tensor([model(Data(x = test_data_hitsk_mrr.x, edge_label_index = neg_edge_label_index, edge_index = test_data_hitsk_mrr.edge_index)).x.tolist() for neg_edge_label_index in test_data_hitsk_mrr.neg_edge_label_index ]).squeeze()
+        
         out_dict = {**out_dict, **_eval_mrr(y_pred_pos,y_pred_neg )}
 
 
