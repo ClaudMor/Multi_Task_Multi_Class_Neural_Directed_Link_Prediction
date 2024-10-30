@@ -23,3 +23,8 @@ neg_samples = torch.tensor([negative_sampling(train_edge_index[:, train_edge_ind
 
 a = torch.arange(10)
 b = torch.arange(2, 7)[torch.randperm(5)]
+
+
+
+
+

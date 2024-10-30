@@ -31,9 +31,14 @@ model_name = "gravity_gae" # One of "gravity_gae", "sourcetarget_gae","mlp_gae",
 device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Detects gpu if available
 num_runs = 5     # Number of dataset splits to average over
 
-for dataset in ["citeseer","google"]:
-    for training_framework in ["baseline", "multiclass","scalarization","multiobjective"]:
+for dataset in ["google"]:
+    for training_framework in ["scalarization","multiobjective"]:
         for model_name in ["gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"]:
+
+            if model_name == "gravity_gae" and training_framework == "multiclass":
+                continue
+
+            print(f"MODEL = {model_name}, TRAINING FRAMEWORK = {training_framework}")
             # Then run the entire script
             if training_framework == "multiclass":
                 model_name += "_multiclass"
@@ -59,7 +64,7 @@ for dataset in ["citeseer","google"]:
             model = methods.get_model(dataset,  model_name, device)
 
             # Since all models are lazy, we run a forward to get an initial state dict
-            _, train_data_directional, _, _, _, _, test_data_general, test_data_directional, test_data_bidirectional, test_data_general_hitsk_mrr = methods.get_split_3_tasks_scipy(dataset, features_type,  add_remaining_self_loops_supervision, use_sparse_representation, True, device)
+            _, train_data_directional, _, _, _, _, _, _, _, _ = methods.get_split_3_tasks_scipy(dataset, features_type,  add_remaining_self_loops_supervision, use_sparse_representation, True, device)
 
 
             with torch.no_grad():
@@ -158,3 +163,13 @@ for dataset in ["citeseer","google"]:
 train_data_general, train_data_directional, train_data_bidirectional, val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional = (None, None, None, None, None, None, None, None, None)
 torch.cuda.empty_cache()
 
+
+
+# from torch_geometric.data import Data 
+
+# test_data_general_hitsk_mrr_st = Data(x = test_data_general_hitsk_mrr.x, edge_label_index = torch.cat(torch.split(test_data_general_hitsk_mrr.neg_edge_label_index, split_size_or_sections=1), dim = 2).squeeze(), edge_index = test_data_general_hitsk_mrr.edge_index)
+
+# res = model(test_data_general_hitsk_mrr_st)
+# res.x = res.x.reshape(-1, 100)
+
+# torch.cat(torch.split(test_data_general_hitsk_mrr.neg_edge_label_index, split_size_or_sections=1), dim = 2).squeeze()
