@@ -67,19 +67,16 @@ class DecoderDotProduct(Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, batch):
+    def forward(self, z, edge_label_index):
 
-        new_batch   = copy.copy(batch)
-
-
-        if batch.edge_label_index in ["full_graph", "salha_biased"]:
+        if edge_label_index in ["full_graph", "salha_biased"]:
             
-            new_batch.x = torch.matmul(batch.x, batch.x.t()).reshape(-1,1) 
+            z = torch.matmul(z, z.t()).reshape(-1,1) 
 
         else:
-            new_batch.x = ( batch.x[batch.edge_label_index[0,:],:] * batch.x[batch.edge_label_index[1,:],:]).sum(dim = 1).reshape(-1,1)
+            z = ( z[edge_label_index[0,:],:] * z[edge_label_index[1,:],:]).sum(dim = 1).reshape(-1,1)
         
-        return new_batch
+        return z
 
 
 class DecoderGravity(Module):

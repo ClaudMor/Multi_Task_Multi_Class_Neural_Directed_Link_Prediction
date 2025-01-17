@@ -202,8 +202,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_name",
         type=str,
-        default="gravity_gae",
-        choices=["gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"],
+        default="gae",
+        choices=["gae", "gravity_gae", "sourcetarget_gae","mlp_gae", "digae","magnet"],
         help="The model to use",
     )
     parser.add_argument(

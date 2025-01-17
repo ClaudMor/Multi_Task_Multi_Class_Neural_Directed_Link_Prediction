@@ -131,7 +131,7 @@ def get_gravity_gae_multiclass(input_dimension, hidden_dimension, output_dimensi
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderGravityMulticlass(l = l, train_l=train_l, CLAMP = CLAMP, test_val_binary = True)
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 
@@ -160,7 +160,7 @@ def get_sourcetarget_gae(input_dimension, hidden_dimension, output_dimension, us
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderSourceTarget()
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 def get_gae(input_dimension, hidden_dimension, output_dimension, use_sparse_representation):
@@ -188,7 +188,7 @@ def get_gae(input_dimension, hidden_dimension, output_dimension, use_sparse_repr
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderDotProduct()
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 def get_mlp_gae_multiclass(input_dimension, hidden_dimension, output_dimension, bias_decoder, use_sparse_representation, dropout, device):
@@ -215,7 +215,7 @@ def get_mlp_gae_multiclass(input_dimension, hidden_dimension, output_dimension, 
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderLinear_for_EffectiveLP_multiclass(output_dimension, 1, bias = bias_decoder, dropout = dropout)
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 
@@ -243,7 +243,7 @@ def get_mlp_gae(input_dimension, hidden_dimension, output_dimension, use_sparse_
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderLinear_for_EffectiveLP(output_dimension, 1, bias = bias_decoder, dropout = dropout) 
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 
@@ -263,7 +263,7 @@ def get_digae(input_dimension, hidden_dimension, output_dimension, alpha_init, b
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]),])
     decoder = DecoderSourceTarget()
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 def get_digae_multiclass(input_dimension, hidden_dimension, output_dimension, alpha_init, beta_init, use_sparse_representation, device, test_val_binary = True):
@@ -283,7 +283,7 @@ def get_digae_multiclass(input_dimension, hidden_dimension, output_dimension, al
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]),])
     decoder = DecoderSourceTargetMulticlass(test_val_binary = test_val_binary)
-    return Sequential( encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 
@@ -292,7 +292,7 @@ def get_magnet(input_dimension, hidden_dimension, q, K, activation, num_layers, 
     encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, ) # sparse = use_sparse_representation
     decoder = DecoderLinear_for_EffectiveLP(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) 
 
-    return Sequential(encoder, decoder).to(device)
+    return EncoderDecoderGAE(encoder, decoder)
     
 
 
@@ -301,7 +301,7 @@ def get_magnet_multiclass(input_dimension, hidden_dimension, q, K, activation, n
     encoder = MagNet_link_prediction(num_features = input_dimension,  hidden = hidden_dimension, q=q, K = K, activation = activation, trainable_q = trainable_q,  layer=num_layers, dropout = dropout, normalization = "sym", cached =cached, sparse = use_sparse_representation) 
     decoder = DecoderLinear_for_EffectiveLP_multiclass(2*hidden_dimension, 1, bias = bias_decoder, dropout = dropout) 
 
-    return Sequential(encoder, decoder).to(device)
+    return EncoderDecoderGAE(encoder, decoder)
 
     
 
