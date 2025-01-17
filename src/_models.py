@@ -1,4 +1,4 @@
-from torch.nn import Sequential, ReLU, LeakyReLU
+from torch.nn import Module, Sequential, ReLU, LeakyReLU
 from GNN import LayerWrapper, DecoderGravity, DecoderGravityMulticlass, DecoderSourceTarget, DecoderSourceTargetMulticlass, DecoderDotProduct, DecoderLinear_for_EffectiveLP, DecoderLinear_for_EffectiveLP_multiclass, GNN_FB
 from Convolution import Conv, DiGAE
 from custom_losses import losses_sum_closure, auc_loss, ap_loss
@@ -66,7 +66,16 @@ def get_sourcetarget_gae_multiclass(input_dimension, hidden_dimension, output_di
     return Sequential(encoder, decoder)
 
 
+class EncoderDecoderGAE(Module):
 
+    def __init__(self, encoder, decoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def forward(self, x, edge_index, edge_label_index):
+        x = self.encoder(x, edge_index)
+        return self.decoder(x, edge_label_index)
 
 def get_gravity_gae(input_dimension, hidden_dimension, output_dimension, use_sparse_representation, CLAMP, l , train_l):
 
@@ -93,7 +102,7 @@ def get_gravity_gae(input_dimension, hidden_dimension, output_dimension, use_spa
 
     encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
     decoder = DecoderGravity(l = l, train_l=train_l, CLAMP = CLAMP)
-    return Sequential(encoder, decoder)
+    return EncoderDecoderGAE(encoder, decoder)
 
 
 
