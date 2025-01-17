@@ -18,45 +18,49 @@ class LayerWrapper(Module):
         self._add_remaining_self_loops = _add_remaining_self_loops
         self.uses_sparse_representation = uses_sparse_representation
 
-    def forward(self, batch):
+    def forward(self, x, edge_index):
 
-    
-        new_batch = copy.copy(batch)
+        edge_index = copy.copy(edge_index).to(x.device)
         if self._add_remaining_self_loops and not self.uses_sparse_representation:
-            new_batch.edge_index, _  = add_remaining_self_loops(new_batch.edge_index)
+            edge_index, _  = add_remaining_self_loops(edge_index)
         elif self._add_remaining_self_loops and self.uses_sparse_representation:
-            new_batch.edge_index = torch_sparse.fill_diag(new_batch.edge_index, 2)
+            edge_index = torch_sparse.fill_diag(edge_index, 2)
 
         if not self.uses_sparse_representation:
-            new_batch.x = self.layer(x = new_batch.x, edge_index = new_batch.edge_index)
+            x = self.layer(x = x, edge_index = edge_index)
         else:
-            new_batch.x = self.layer(x = new_batch.x, edge_index = new_batch.edge_index)
+            x = self.layer(x = x, edge_index = edge_index)
 
         if self.normalization_before_activation is not None:
-            new_batch.x = self.normalization_before_activation(new_batch.x)
+            x = self.normalization_before_activation(x)
         if self.activation is not None:
-            new_batch.x = self.activation(new_batch.x)
+            x = self.activation(x)
         if self.normalization_after_activation is not None:
-            new_batch.x =  self.normalization_after_activation(new_batch.x)
+            x =  self.normalization_after_activation(x)
         if self.dropout_p is not None:
-            new_batch.x =  dropout(new_batch.x, p=self.dropout_p, training=self.training)
+            x =  dropout(x, p=self.dropout_p, training=self.training)
 
-
-        return new_batch
-
-
+        return x
 
 
 class GNN_FB(Module):
     def __init__(self, gnn_layers,  preprocessing_layers = [], postprocessing_layers = []):
         super().__init__()
 
-        self.net = torch.nn.Sequential(*preprocessing_layers, *gnn_layers, *postprocessing_layers )
-
+        self.gnn_layers = ModuleList(gnn_layers)
+        self.preprocessing_layers = ModuleList(preprocessing_layers)
+        self.postprocessing_layers = ModuleList(postprocessing_layers)
+        # self.net = torch.nn.Sequential(*preprocessing_layers, *gnn_layers, *postprocessing_layers )
     
-    def forward(self, batch):
-        return self.net(batch) 
-
+    def forward(self, x, edge_index):
+        # x, edge_index = batch.x, batch.edge_index
+        for layer in self.preprocessing_layers:
+            x = layer(x, edge_index)
+        for layer in self.gnn_layers:
+            x = layer(x, edge_index)
+        for layer in self.postprocessing_layers:
+            x = layer(x, edge_index)
+        return x
 
 
 class DecoderDotProduct(Module):
@@ -85,36 +89,44 @@ class DecoderGravity(Module):
         self.l = Parameter(torch.tensor([l]), requires_grad = train_l )
         self.EPS = EPS
         self.CLAMP = CLAMP
-    def forward(self, batch):
 
-        new_batch   = copy.copy(batch)
+    def decode_all(self, z):
+        m_i = z[:,-1].reshape(-1,1).expand((-1,z.size(0))).t()
+        r = z[:,:-1]
 
-        if batch.edge_label_index in ["full_graph", "directional", "bidirectional"]: 
-            m_i = new_batch.x[:,-1].reshape(-1,1).expand((-1,new_batch.x.size(0))).t()
-            r = new_batch.x[:,:-1]
+        norm = (r * r).sum(dim = 1, keepdim = True)
+        r1r2 = torch.matmul(r, r.t())
 
-            norm = (r * r).sum(dim = 1, keepdim = True)
-            r1r2 = torch.matmul(r, r.t())
+        r2 = norm - 2*r1r2 + norm.t() 
 
-            r2 = norm - 2*r1r2 + norm.t() 
+        logr2 = torch.log(r2 + self.EPS)
 
-            logr2 = torch.log(r2 + self.EPS)
+        if self.CLAMP is not None:
+            logr2 = logr2.clamp(min = -self.CLAMP, max = self.CLAMP)
+        
+        z = (m_i -  self.l * logr2)
+        return z
 
-            if self.CLAMP is not None:
-                logr2 = logr2.clamp(min = -self.CLAMP, max = self.CLAMP)
-            
-            new_batch.x = (m_i -  self.l * logr2).reshape(-1,1)
+    def forward(self, z, edge_label_index):
+
+        if edge_label_index in ["full_graph", "directional", "bidirectional"]: 
+
+            z = self.decode_all(z).reshape(-1,1)
 
         else:
 
-            m_j = new_batch.x[new_batch.edge_label_index[1,:],-1]
+            z_all = self.decode_all(z)
+            z = z_all[edge_label_index[0,:], edge_label_index[1,:]].reshape(-1,1)
 
-            diff = new_batch.x[new_batch.edge_label_index[0,:], :-1] - new_batch.x[new_batch.edge_label_index[1,:], :-1]
 
-            r2 = (diff * diff).sum(dim = 1) 
-            new_batch.x = (m_j - self.l * torch.log(r2 + self.EPS)).reshape(-1,1)
+            # m_j = z[edge_label_index[1,:],-1]
+
+            # diff = z[edge_label_index[0,:], :-1] - z[edge_label_index[1,:], :-1]
+
+            # r2 = (diff * diff).sum(dim = 1) 
+            # z = (m_j - self.l * torch.log(r2 + self.EPS)).reshape(-1,1)
             
-        return new_batch
+        return z
 
     def reset_parameters(self):
         self.l.data = torch.tensor([self.l_initialization]).to(self.l.data.device)

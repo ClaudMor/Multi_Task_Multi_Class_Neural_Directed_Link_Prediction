@@ -15,6 +15,7 @@ from torch_geometric import seed_everything
 import gc
 
 import methods
+import train_test_utilities as ttutils
 
 
 
@@ -59,8 +60,8 @@ model = methods.get_model(dataset,  model_name, device)
 # Since all models are lazy, we run a forward to get an initial state dict
 _, train_data_directional, _, _, _, _, _, _, _ = methods.get_split_3_tasks_scipy(dataset, features_type,  add_remaining_self_loops_supervision, use_sparse_representation, True, device)
 with torch.no_grad():
-    _ = model(train_data_directional)
-
+    z = model.encoder(train_data_directional.x, train_data_directional.edge_index)
+    _ = model.decoder(z, train_data_directional.edge_label_index)
 
 # Get initial state dict in order to always have the same initial configuration 
 initial_model_state_dict = copy.deepcopy(model.state_dict())
@@ -79,10 +80,20 @@ metrics_dict = {"aucroc":  methods.aucroc, "ap": methods.average_precision}
 
 for i in range(num_runs):
 
-    train_data_general, train_data_directional, train_data_bidirectional, val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional = (None, None, None, None, None, None, None, None, None)
+    (
+        train_data_general, train_data_directional, train_data_bidirectional,
+        val_data_general, val_data_directional, val_data_bidirectional,
+        test_data_general, test_data_directional, test_data_bidirectional
+    ) = (None, None, None, None, None, None, None, None, None)
     torch.cuda.empty_cache()
 
-    train_data_general, train_data_directional, train_data_bidirectional, val_data_general, val_data_directional, val_data_bidirectional, test_data_general, test_data_directional, test_data_bidirectional = methods.get_split_3_tasks_scipy(dataset, features_type,  add_remaining_self_loops_supervision, use_sparse_representation, True, device)
+    (
+        train_data_general, train_data_directional, train_data_bidirectional,
+        val_data_general, val_data_directional, val_data_bidirectional,
+        test_data_general, test_data_directional, test_data_bidirectional
+    ) = methods.get_split_3_tasks_scipy(
+        dataset, features_type, add_remaining_self_loops_supervision,
+        use_sparse_representation, True, device)
 
     if training_framework == "multiclass":
         train_data_general.edge_label = methods.get_multicass_lp_edge_label_from_sparse_adjt(train_data_general, "train", remaining_supervision_self_loops, device).to(device)
@@ -113,13 +124,42 @@ for i in range(num_runs):
     optimizer = optimizer.__class__(model.parameters(), **optimizer.defaults)
 
     if training_framework == "multiclass":
-        methods.train(train_data_general, model,  train_loss , optimizer, device, num_epochs,  early_stopping = True, val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),  val_loss_fn =  val_loss_fn, validation_on_device=True,  patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
+        ttutils.train(train_data_general, model,  train_loss , optimizer, device,
+                      num_epochs,  early_stopping = True,
+                      val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),
+                      val_loss_fn =  val_loss_fn, validation_on_device=True,
+                      patience = 200, retrain_data = None,
+                      use_sparse_representation = use_sparse_representation,
+                      epoch_print_freq = 10)
+    
     elif training_framework == "baseline":
-        methods.train(train_data_general, model,  train_loss , optimizer, device, num_epochs,  early_stopping = True, val_datasets = (val_data_general,),  val_loss_fn =  val_loss_fn, validation_on_device=True, patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
+        ttutils.train(train_data_general, model,  train_loss , optimizer, device,
+                      num_epochs,  early_stopping = True,
+                      val_datasets = (val_data_general,),
+                      val_loss_fn =  val_loss_fn, validation_on_device=True,
+                      patience = 200, retrain_data = None,
+                      use_sparse_representation = use_sparse_representation,
+                      epoch_print_freq = 10)
+    
     elif training_framework == "scalarization":
-        methods.train_3_tasks(train_data_general, train_data_directional, train_data_bidirectional,  model,  train_loss_general, train_loss_directional, train_loss_bidirectional, optimizer, device, num_epochs, lrscheduler = None, early_stopping = True, val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),  val_loss_fn =  val_loss_fn, patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
+        methods.train_3_tasks(
+            train_data_general, train_data_directional, train_data_bidirectional,
+            model,  train_loss_general, train_loss_directional, train_loss_bidirectional,
+            optimizer, device, num_epochs, lrscheduler = None, early_stopping = True,
+            val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),
+            val_loss_fn =  val_loss_fn, patience = 200, retrain_data = None,
+            use_sparse_representation = use_sparse_representation,
+            epoch_print_freq = 10)
+    
     elif training_framework == "multiobjective":
-        methods.train_3_tasks_multiobjective(train_data_general, train_data_directional, train_data_bidirectional, model,  train_loss_general, train_loss_directional, train_loss_bidirectional, optimizer, device, num_epochs, lrscheduler = None, early_stopping = True, val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),  val_loss_fn =  val_loss_fn, validation_on_device=True, patience = 200, retrain_data = None, use_sparse_representation = use_sparse_representation,  epoch_print_freq = 10)
+        methods.train_3_tasks_multiobjective(
+            train_data_general, train_data_directional, train_data_bidirectional,
+            model,  train_loss_general, train_loss_directional, train_loss_bidirectional,
+            optimizer, device, num_epochs, lrscheduler = None, early_stopping = True,
+            val_datasets = (val_data_general, val_data_directional, val_data_bidirectional),
+            val_loss_fn =  val_loss_fn, validation_on_device=True, patience = 200,
+            retrain_data = None, use_sparse_representation = use_sparse_representation,
+            epoch_print_freq = 10)
 
 
     preds_general.append(methods.evaluate_link_prediction(model, test_data_general, metrics_dict = metrics_dict, device = device))

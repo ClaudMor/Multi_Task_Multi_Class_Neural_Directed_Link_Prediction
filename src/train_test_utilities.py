@@ -1,4 +1,5 @@
 import torch
+from torch_geometric.utils import negative_sampling
 import numpy as np
 import copy
 import time
@@ -6,7 +7,12 @@ import gc
 
 
 
-def train(train_data, model, train_loss_fn, optimizer,device, num_epochs, lrscheduler = None, early_stopping = False, val_loss_fn = None, val_datasets = None, val_loss_aggregation = "sum", validation_on_device = True, patience = None, use_sparse_representation = False, retrain_data = None, epoch_print_freq = 10): # , train_idxs = None, val_idxs = None, retrain_idxs = None
+def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
+          lrscheduler = None, early_stopping = False, val_loss_fn = None,
+          val_datasets = None, val_loss_aggregation = "sum",
+          validation_on_device = True, patience = None,
+          use_sparse_representation = False, retrain_data = None,
+          epoch_print_freq = 10): # , train_idxs = None, val_idxs = None, retrain_idxs = None
     
     model.train()
 
@@ -35,11 +41,28 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs, lrsche
     for i in range(num_epochs):
 
         optimizer.zero_grad(set_to_none=True)
-        pred = model(train_data)
+        z = model.encoder(train_data.x, train_data.edge_index)
 
-        loss = train_loss_fn(pred, y_true)
+        if not hasattr(train_data.edge_index, "shape"):
+            # edge_index is a SparseTensor
+            x_pred = model.decoder(z, train_data.edge_label_index)
+            loss = train_loss_fn(x_pred, y_true)
 
-        pred = None
+        else:
+
+            1/0
+            pos_edge_index = train_data.edge_index
+            neg_edge_index = negative_sampling(pos_edge_index, train_data.num_nodes, pos_edge_index.shape[1]*1000)
+
+            pos_pred = model.decoder(z, pos_edge_index)
+            neg_pred = model.decoder(z, neg_edge_index)
+
+            x_pred = torch.cat([pos_pred, neg_pred], dim=0)
+            y_t = torch.cat([torch.ones(pos_pred.size(0),1), torch.zeros(neg_pred.size(0),1)]).to(device)
+
+            loss = train_loss_fn(x_pred, y_t)
+
+        x_pred = None
         gc.collect()
         torch.cuda.empty_cache()
 
@@ -134,7 +157,7 @@ def compute_loss_on_validation(val_data, model, val_loss_fn,  validation_on_devi
 
         y_true = val_data.edge_label
 
-        val_pred = model(val_data).x
+        val_pred = model(val_data.x, val_data.edge_index, val_data.edge_label_index)
 
         # ic(val_pred)
         val_loss = val_loss_fn(val_pred.reshape(-1),y_true.reshape(-1))
@@ -159,7 +182,9 @@ def evaluate_link_prediction(model, test_data, metrics_dict, test_data_on_device
     model.eval()
     
 
-    logits_test_data = model(test_data).x.cpu()
+    z = model.encoder(test_data.x, test_data.edge_index)
+    logits_test_data = model.decoder(z, test_data.edge_label_index).flatten()
+    # logits_test_data = model(test_data).x.cpu()
 
     out_dict = {}
     for metric_name, metric in metrics_dict.items():

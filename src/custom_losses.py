@@ -45,6 +45,6 @@ class StandardLossWrapper(Module):
         self.loss = loss
         self.norm = norm
 
-    def forward(self, batch, ground_truth):
-        return self.norm * self.loss(batch.x, ground_truth)
+    def forward(self, x, ground_truth):
+        return self.norm * self.loss(x, ground_truth)
 
