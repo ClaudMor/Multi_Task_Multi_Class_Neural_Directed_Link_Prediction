@@ -154,7 +154,8 @@ def get_split_3_tasks_scipy(dataset_name, features_type, add_remaining_self_loop
 
 
     if features_type == "OHE":
-        x = torch.eye(num_nodes)
+        x = torch.sparse.spdiags(torch.ones(num_nodes), torch.tensor([0]),
+                                 (num_nodes, num_nodes))
     elif features_type == "in_out_deg":
         print(f"train_edge_index = {train_edge_index}")
         out_deg = degree(train_edge_index[0,:], num_nodes = num_nodes)
