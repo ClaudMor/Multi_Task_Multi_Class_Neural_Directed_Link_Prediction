@@ -61,6 +61,7 @@ def summarize_link_prediction_evaluation(performances):
 
 def round_to_first_significative_digit(x):
     digit = -int(floor(log10(abs(x))))
+    digit = max(4, digit)
     return digit, round(x, digit)
 
 def pretty_print_link_performance_evaluation(mean_std_dict, model_name):
