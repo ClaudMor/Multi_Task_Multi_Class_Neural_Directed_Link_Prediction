@@ -2,7 +2,6 @@ import copy
 import numpy as np
 import torch
 
-from train_test_utilities import compute_loss_on_validation
 from scipy.optimize import minimize, LinearConstraint
 
 
@@ -142,12 +141,17 @@ def train_3_tasks_multiobjective(train_data_general, train_data_directional, tra
             train_losses = np.round([loss_general_item, loss_directional_item, loss_bidirectional_item], decimals= 3 )
             print(f"train_losses = {train_losses}, ES_counter = {ES_counter}")
 
-        
+
         if val_datasets is not None:
             val_losses_by_dataset = []
+            model.eval()
+            z = model.encoder(val_dataset.x, val_dataset.edge_index)
             for val_dataset in val_datasets:
                 if val_dataset.edge_label_index.size(1) != 0:
-                    val_losses_by_dataset.append(compute_loss_on_validation(val_dataset,  model, val_loss_fn, validation_on_device, device, use_sparse_representation))
+                    with torch.no_grad():
+                        val_pred = model.decoder(z, val_dataset.edge_label_index)
+                        val_loss = val_loss_fn(val_pred.reshape(-1),val_dataset.edge_label.reshape(-1))
+                        val_losses_by_dataset.append(val_loss)
 
 
             val_loss = None

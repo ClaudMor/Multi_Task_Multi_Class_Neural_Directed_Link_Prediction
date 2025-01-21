@@ -1,6 +1,7 @@
 from torch.nn import Module, Sequential, ReLU, LeakyReLU
 from GNN import LayerWrapper, DecoderGravity, DecoderGravityMulticlass, DecoderSourceTarget, DecoderSourceTargetMulticlass, DecoderDotProduct, DecoderLinear_for_EffectiveLP, DecoderLinear_for_EffectiveLP_multiclass, GNN_FB
 from Convolution import Conv, DiGAE
+from torch_geometric.nn import GCNConv
 from custom_losses import losses_sum_closure, auc_loss, ap_loss
 from MagNet import MagNet_link_prediction
 
@@ -162,31 +163,18 @@ def get_sourcetarget_gae(input_dimension, hidden_dimension, output_dimension, us
     decoder = DecoderSourceTarget()
     return EncoderDecoderGAE(encoder, decoder)
 
+class GCNEncoder(Module):
+    def __init__(self, in_channels, hidden_channels, out_channels):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, out_channels)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index).relu()
+        return self.conv2(x, edge_index)
 
 def get_gae(input_dimension, hidden_dimension, output_dimension, use_sparse_representation):
-
-    
-    unwrapped_layers_kwargs = [
-                        {"layer":Conv(input_dimension, hidden_dimension), 
-                        "normalization_before_activation": None, 
-                        "activation": ReLU(), 
-                        "normalization_after_activation": None, 
-                        "dropout_p": None, 
-                        "_add_remaining_self_loops": False, 
-                        "uses_sparse_representation": use_sparse_representation,
-                        },
-
-                        {"layer":Conv(hidden_dimension, output_dimension + 1), 
-                        "normalization_before_activation": None, 
-                        "activation": None, 
-                        "normalization_after_activation": None, 
-                        "dropout_p": None, 
-                        "_add_remaining_self_loops": False, 
-                        "uses_sparse_representation": use_sparse_representation,
-                        },]
-
-
-    encoder = GNN_FB(gnn_layers = [ LayerWrapper(**unwrapped_layers_kwargs[0]), LayerWrapper(**unwrapped_layers_kwargs[1])])
+    encoder = GCNEncoder(input_dimension, hidden_dimension, output_dimension)
     decoder = DecoderDotProduct()
     return EncoderDecoderGAE(encoder, decoder)
 
@@ -308,7 +296,7 @@ def get_magnet_multiclass(input_dimension, hidden_dimension, q, K, activation, n
 
 models_suggested_parameters_sets = {"cora":{
 
-                                            "gae": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True},
+                                            "gae": {"input_dimension":2708 , "hidden_dimension": 32, "output_dimension":16, "use_sparse_representation": True},
 
                                             "gravity_gae": {"input_dimension":2708 , "hidden_dimension": 64, "output_dimension":32, "use_sparse_representation": True, "CLAMP" :None, "l": 1. , "train_l":True},
                                            

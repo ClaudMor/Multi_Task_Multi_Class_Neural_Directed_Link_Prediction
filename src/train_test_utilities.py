@@ -40,6 +40,7 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
         best_model_dict = initial_model_state_dict
     for i in range(num_epochs):
 
+        model.train()
         optimizer.zero_grad(set_to_none=True)
         z = model.encoder(train_data.x, train_data.edge_index)
 
@@ -62,9 +63,6 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
 
             loss = train_loss_fn(x_pred, y_t)
 
-        x_pred = None
-        gc.collect()
-        torch.cuda.empty_cache()
 
         # Backpropagation
         loss.backward()
@@ -80,9 +78,14 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
         
         if val_datasets is not None:
             val_losses_by_dataset = []
+            model.eval()
+            z = model.encoder(train_data.x, train_data.edge_index)
             for val_dataset in val_datasets:
                 if val_dataset.edge_label_index.size(1) != 0:
-                    val_losses_by_dataset.append(compute_loss_on_validation(val_dataset,  model, val_loss_fn, validation_on_device, device, use_sparse_representation))
+                    with torch.no_grad():
+                        val_pred = model.decoder(z, val_dataset.edge_label_index)
+                        val_loss = val_loss_fn(val_pred.reshape(-1),val_dataset.edge_label.reshape(-1))
+                        val_losses_by_dataset.append(val_loss)
 
 
 
@@ -143,34 +146,6 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
         
         end = time.time()
         print(f"Training time: {end - start} seconds")
-
-
-
-def compute_loss_on_validation(val_data, model, val_loss_fn,  validation_on_device, device, use_sparse_representation = False, eval = True):
-    if eval:
-        model.eval()
-
-    if not validation_on_device:
-        model.cpu()
-
-    with torch.no_grad():
-
-        y_true = val_data.edge_label
-
-        val_pred = model(val_data.x, val_data.edge_index, val_data.edge_label_index)
-
-        # ic(val_pred)
-        val_loss = val_loss_fn(val_pred.reshape(-1),y_true.reshape(-1))
-
-    if eval:
-        model.train()
-
-    if not validation_on_device:
-        model.to(device)
-
-    return val_loss
-    
-
 
 
 @torch.no_grad()
