@@ -25,11 +25,14 @@ from IPython.core.ultratb import ColorTB
 sys.excepthook = ColorTB()
 
 
-def main(dataset, training_framework, model_name, num_runs):
+def main(dataset, training_framework, model_name, num_runs, device):
     seed_everything(12345)
 
-    # Please set the parameters below
-    device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Detects gpu if available
+    # Set the device
+    if device == "cuda" and not torch.cuda.is_available():
+        print("CUDA is not available. Using CPU instead.")
+        device = "cpu"
+    device = torch.device(device)
 
     # Then run the entire script
     if training_framework == "multiclass":
@@ -212,6 +215,16 @@ if __name__ == "__main__":
         default=5,
         help="The number of dataset splits to average over",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
+        help="The device to use for training",
+    )
     args = parser.parse_args()
-    
-    main(args.dataset, args.training_framework, args.model_name, args.num_runs)
+
+    main(args.dataset,
+         args.training_framework,
+         args.model_name,
+         args.num_runs,
+         args.device)
