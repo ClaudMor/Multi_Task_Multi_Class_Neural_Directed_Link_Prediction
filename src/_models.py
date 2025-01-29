@@ -1,5 +1,3 @@
-# Reorganize and reformat the following section to adhere to pep8 conventions and be more readable and organized.
-
 from torch.nn import Module, Sequential, ReLU, LeakyReLU
 from GNN import (
     LayerWrapper, DecoderGravity, DecoderGravityMulticlass, DecoderSourceTarget,
