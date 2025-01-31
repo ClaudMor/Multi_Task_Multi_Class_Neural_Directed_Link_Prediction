@@ -139,13 +139,12 @@ class DecoderGravityMulticlass(Module):
         self.l = Parameter(torch.tensor([l]), requires_grad = train_l )
         self.EPS = EPS
         self.CLAMP = CLAMP
-    def forward(self, batch):
+    
+    def forward(self, x, edge_label_index):
 
-        new_batch   = copy.copy(batch)
-
-        if batch.edge_label_index in ["full_graph", "salha_biased"]  and self.training: 
-            m_j = new_batch.x[:,-1].reshape(-1,1).expand((-1,new_batch.x.size(0))).t()
-            r = new_batch.x[:,:-1]
+        if edge_label_index in ["full_graph", "salha_biased"]  and self.training: 
+            m_j = x[:, -1].reshape(-1, 1).expand((-1, x.size(0))).t()
+            r = x[:, :-1]
 
             # ||r1 - r2||^2_2 = r1^2 + r2^2 - 2 r1 * r2
 
@@ -158,7 +157,6 @@ class DecoderGravityMulticlass(Module):
             if self.CLAMP is not None:
                 logr2 = logr2.clamp(min = -self.CLAMP, max = self.CLAMP)
 
-
             s_ij = (m_j -  self.l * logr2).sigmoid()
             s_ji = s_ij.t()
 
@@ -168,26 +166,21 @@ class DecoderGravityMulticlass(Module):
             p_nb = ((1.-s_ij)*(1.-s_ji)).reshape(-1,1)
 
             probs = torch.cat((p_nb, p_pu, p_pb, p_nu), dim = 1)
-
             log_probs = torch.log(probs.clamp(min = 1e-10, max = 1.))
 
+            x = log_probs
 
-            
-            new_batch.x = log_probs
+        elif torch.is_tensor(edge_label_index) and not self.training and not self.test_val_binary:
 
+            m_j = x[edge_label_index[1,:],-1]
+            m_i = x[edge_label_index[0,:],-1]
 
-        elif torch.is_tensor(batch.edge_label_index) and not self.training and not self.test_val_binary:
-
-            m_j = new_batch.x[new_batch.edge_label_index[1,:],-1]
-            m_i = new_batch.x[new_batch.edge_label_index[0,:],-1]
-
-            diff = new_batch.x[new_batch.edge_label_index[0,:], :-1] - new_batch.x[new_batch.edge_label_index[1,:], :-1] # z1 - z2
+            diff = x[edge_label_index[0,:], :-1] - x[edge_label_index[1,:], :-1] # z1 - z2
 
             r2 = (diff * diff).sum(dim = 1) # || z1 - z2||^2_2
 
             s_ij = (m_j -  self.l * torch.log(r2 + self.EPS)).sigmoid()
             s_ji = (m_i -  self.l * torch.log(r2 + self.EPS)).sigmoid()
-
 
             p_nu = ((1. - s_ij)*s_ji).reshape(-1,1 )
             p_pu = (s_ij*(1.-s_ji)).reshape(-1,1 )
@@ -195,26 +188,18 @@ class DecoderGravityMulticlass(Module):
             p_nb = ((1.-s_ij)*(1.-s_ji)).reshape(-1,1)
 
             probs = torch.cat((p_nb, p_pu, p_pb, p_nu), dim = 1)
-
             log_probs = torch.log(probs.clamp(min = 1e-10, max = 1.))
 
-            new_batch.x = log_probs
+            x = log_probs
 
+        elif torch.is_tensor(edge_label_index) and not self.training and self.test_val_binary:
 
-
-        elif torch.is_tensor(batch.edge_label_index) and not self.training and self.test_val_binary:
-
-
-            m_j = new_batch.x[new_batch.edge_label_index[1,:],-1]
-
-
-            diff = new_batch.x[new_batch.edge_label_index[0,:], :-1] - new_batch.x[new_batch.edge_label_index[1,:], :-1] # z1 - z2
-
+            m_j = x[edge_label_index[1,:],-1]
+            diff = x[edge_label_index[0,:], :-1] - x[edge_label_index[1,:], :-1] # z1 - z2
             r2 = (diff * diff).sum(dim = 1) # || z1 - z2||^2_2
+            x = m_j - self.l * torch.log(r2 + self.EPS)
 
-            new_batch.x = m_j - self.l * torch.log(r2 + self.EPS)
-            
-        return new_batch
+        return x
 
     def reset_parameters(self):
         # super().reset_parameters()
