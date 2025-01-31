@@ -221,27 +221,29 @@ class DecoderGravityMulticlass(Module):
         self.l.data = torch.tensor([self.l_initialization]).to(self.l.data.device)
 
 class DecoderSourceTarget(Module):
+    
     def __init__(self):
         super().__init__()
-    def forward(self, batch):
 
-        new_batch   = copy.copy(batch)
+    def forward(self, x, edge_label_index):
 
-        hidden_dimension = batch.x.size(1)
+        hidden_dimension = x.size(1)
         half_dimension = int(hidden_dimension/2)
 
-        if batch.edge_label_index in ["full_graph", "directional", "bidirectional"] and self.training:
+        if edge_label_index in ["full_graph", "directional", "bidirectional"] and self.training:
 
-            source = batch.x[:, :half_dimension]
-            target = batch.x[:, half_dimension:]
+            source = x[:, :half_dimension]
+            target = x[:, half_dimension:]
 
-            new_batch.x = torch.matmul(source, target.t()).reshape(-1,1)
+            x = torch.matmul(source, target.t()).reshape(-1,1)
 
         else:
 
-            new_batch.x = (new_batch.x[new_batch.edge_label_index[0,:], :half_dimension] * new_batch.x[new_batch.edge_label_index[1,:], half_dimension:]).sum(dim = 1).sigmoid().reshape(-1,1)
-            
-        return new_batch
+            x = (x[edge_label_index[0,:], :half_dimension] 
+                 * x[edge_label_index[1,:], half_dimension:])\
+                    .sum(dim = 1).sigmoid().reshape(-1,1)
+
+        return x
 
 
 class DecoderSourceTargetMulticlass(Module):
