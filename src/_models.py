@@ -304,7 +304,7 @@ def get_digae(input_dimension, hidden_dimension, output_dimension, alpha_init, b
     ]
 
     encoder = GNN_FB(gnn_layers=[LayerWrapper(**unwrapped_layers_kwargs[0])])
-    decoder = DecoderSourceTarget(test_val_binary=test_val_binary)
+    decoder = DecoderSourceTarget()
     return EncoderDecoderGAE(encoder, decoder)
 
 
