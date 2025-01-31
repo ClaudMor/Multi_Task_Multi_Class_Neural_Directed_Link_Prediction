@@ -219,13 +219,16 @@ def train_3_tasks(train_data, train_data_directional, train_data_bidirectional, 
 
         optimizer.zero_grad()
         tot_val_loss = sum(val_losses_by_dataset)
-        pred_general = model(train_data)
+        z = model.encoder(train_data.x, train_data.edge_index)
+        pred_general = model.decoder(z, train_data.edge_label_index)
         loss_general = ((val_losses_by_dataset[0] / tot_val_loss)**2) * train_loss_fn(pred_general, train_data.edge_label)
 
-        pred_directional = model(train_data_directional)
+        z = model.encoder(train_data_directional.x, train_data_directional.edge_index)
+        pred_directional = model.decoder(z, train_data_directional.edge_label_index)
         loss_directional = ((val_losses_by_dataset[1] / tot_val_loss)**2) * train_loss_fn_directional(pred_directional, train_data_directional.edge_label)
 
-        pred_bidirectional = model(train_data_bidirectional)
+        z = model.encoder(train_data_bidirectional.x, train_data_bidirectional.edge_index)
+        pred_bidirectional = model.decoder(z, train_data_bidirectional.edge_label_index)
         loss_bidirectional = ((val_losses_by_dataset[2] / tot_val_loss)**2) * train_loss_fn_bidirectional(pred_bidirectional, train_data_bidirectional.edge_label)
 
         loss = loss_general + loss_directional + loss_bidirectional
