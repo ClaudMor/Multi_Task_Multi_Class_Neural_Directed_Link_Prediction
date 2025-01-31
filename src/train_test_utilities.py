@@ -51,17 +51,20 @@ def train(train_data, model, train_loss_fn, optimizer,device, num_epochs,
 
         else:
 
-            1/0
-            pos_edge_index = train_data.edge_index
-            neg_edge_index = negative_sampling(pos_edge_index, train_data.num_nodes, pos_edge_index.shape[1]*1000)
+            x_pred = model.decoder(z, train_data.edge_label_index)
+            loss = train_loss_fn(x_pred, y_true)
 
-            pos_pred = model.decoder(z, pos_edge_index)
-            neg_pred = model.decoder(z, neg_edge_index)
+            # 1/0
+            # pos_edge_index = train_data.edge_index
+            # neg_edge_index = negative_sampling(pos_edge_index, train_data.num_nodes, pos_edge_index.shape[1]*1000)
 
-            x_pred = torch.cat([pos_pred, neg_pred], dim=0)
-            y_t = torch.cat([torch.ones(pos_pred.size(0),1), torch.zeros(neg_pred.size(0),1)]).to(device)
+            # pos_pred = model.decoder(z, pos_edge_index)
+            # neg_pred = model.decoder(z, neg_edge_index)
 
-            loss = train_loss_fn(x_pred, y_t)
+            # x_pred = torch.cat([pos_pred, neg_pred], dim=0)
+            # y_t = torch.cat([torch.ones(pos_pred.size(0),1), torch.zeros(neg_pred.size(0),1)]).to(device)
+
+            # loss = train_loss_fn(x_pred, y_t)
 
 
         # Backpropagation

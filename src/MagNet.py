@@ -64,35 +64,31 @@ class MagNet_link_prediction(nn.Module):
             cheb.reset_parameters()
 
 
-    def forward(self, batch) -> torch.FloatTensor: 
-            """
-            Making a forward pass of the MagNet node classification model.
+    def forward(self, x, edge_index, edge_weight=None) -> torch.FloatTensor:
+        """
+        Making a forward pass of the MagNet node classification model.
 
-            Arg types:
-                * real, imag (PyTorch Float Tensor) - Node features.
-                * edge_index (PyTorch Long Tensor) - Edge indices.
-                * query_edges (PyTorch Long Tensor) - Edge indices for querying labels.
-                * edge_weight (PyTorch Float Tensor, optional) - Edge weights corresponding to edge indices.
-            Return types:
-                * log_prob (PyTorch Float Tensor) - Logarithmic class probabilities for all nodes, with shape (num_nodes, num_classes).
-            """
-            new_batch = copy.copy(batch)
+        Arg types:
+            * real, imag (PyTorch Float Tensor) - Node features.
+            * edge_index (PyTorch Long Tensor) - Edge indices.
+            * query_edges (PyTorch Long Tensor) - Edge indices for querying labels.
+            * edge_weight (PyTorch Float Tensor, optional) - Edge weights 
+                corresponding to edge indices.
+        Return types:
+            * log_prob (PyTorch Float Tensor) - Logarithmic class probabilities 
+                for all nodes, with shape (num_nodes, num_classes).
+        """
 
-            real = copy.copy(new_batch.x)
-            imag = torch.clone(real)
-            for cheb in self.Chebs:
-                real, imag = cheb(real, imag, new_batch.edge_index, new_batch.edge_weight)
-                if self.activation:
-                    real, imag = self.complex_relu(real, imag)
+        real = copy.copy(x)
+        imag = torch.clone(real)
+        for cheb in self.Chebs:
+            real, imag = cheb(real, imag, edge_index, edge_weight)
+            if self.activation:
+                real, imag = self.complex_relu(real, imag)
 
+        x = torch.cat((real,imag), dim = 1)
 
-            
-            x = torch.cat((real,imag), dim = 1)
+        if self.dropout > 0:
+            x = F.dropout(x, self.dropout, training=self.training)
 
-            
-            if self.dropout > 0:
-                x = F.dropout(x, self.dropout, training=self.training)
-
-            new_batch.x = x
-
-            return new_batch
+        return x
