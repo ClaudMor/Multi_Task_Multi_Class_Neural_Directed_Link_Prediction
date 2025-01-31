@@ -221,7 +221,7 @@ class DecoderGravityMulticlass(Module):
         self.l.data = torch.tensor([self.l_initialization]).to(self.l.data.device)
 
 class DecoderSourceTarget(Module):
-    
+
     def __init__(self):
         super().__init__()
 
@@ -327,29 +327,27 @@ class MLP_LP(Module):
         self.output_dim = output_dim
         self.activation = activation
 
-    def forward(self, batch):
+    def forward(self, x, edge_label_index):
 
-        if batch.edge_label_index in ["full_graph"]:
+        if edge_label_index in ["full_graph"]:
 
-            srcs_trasf = self.src_linear(batch.x).reshape(batch.num_nodes, 1, self.output_dim)
+            srcs_trasf = self.src_linear(x).reshape(x.size(0), 1, self.output_dim)
 
-            dsts_trasf = self.dst_linear(batch.x)
+            dsts_trasf = self.dst_linear(x)
 
             x =  (srcs_trasf + dsts_trasf).reshape(-1, self.output_dim) 
         
-        elif torch.is_tensor(batch.edge_label_index): 
+        elif torch.is_tensor(edge_label_index):
 
-            src_logits = self.src_linear(batch.x[batch.edge_label_index[0,:],:])
-            dst_logits = self.dst_linear(batch.x[batch.edge_label_index[1,:],:])
+            src_logits = self.src_linear(x[edge_label_index[0,:],:])
+            dst_logits = self.dst_linear(x[edge_label_index[1,:],:])
 
 
             x = src_logits + dst_logits
 
+        x = self.activation(x)
 
-
-        batch.x = self.activation(x)
-
-        return batch
+        return x
 
     def reset_parameters(self):
         super().reset_parameters()
@@ -365,14 +363,10 @@ class DecoderLinear_for_EffectiveLP(Module):
         self.mlp_lp = MLP_LP(input_dim, output_dim, bias)
         self.dropout = Dropout(dropout)
 
-    def forward(self, batch):
+    def forward(self, x, edge_label_index):
 
-        batch.x = self.dropout(self.mlp_lp(batch).x)
-
-            
-        return batch
-
-       
+        x = self.dropout(self.mlp_lp(x, edge_label_index))
+        return x
     
     def reset_parameters(self):
         super().reset_parameters()
