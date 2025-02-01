@@ -50,7 +50,8 @@ def train_3_tasks_multiobjective(train_data_general, train_data_directional, tra
 
         optimizer.zero_grad(set_to_none=True)
 
-        pred_general = model(train_data_general)
+        z = model.encoder(train_data_general.x, train_data_general.edge_index)
+        pred_general = model.decoder(z, train_data_general.edge_label_index)
 
         loss_general = train_loss_general_fn(pred_general, train_data_general.edge_label)
         loss_general.backward()
@@ -69,7 +70,8 @@ def train_3_tasks_multiobjective(train_data_general, train_data_directional, tra
         model.zero_grad(set_to_none=True)
         torch.cuda.empty_cache()
 
-        pred_directional = model(train_data_directional)
+        z = model.encoder(train_data_directional.x, train_data_directional.edge_index)
+        pred_directional = model.decoder(z, train_data_directional.edge_label_index)
         loss_directional = train_loss_fn_directional(pred_directional, train_data_directional.edge_label)
         loss_directional.backward()
 
@@ -88,7 +90,8 @@ def train_3_tasks_multiobjective(train_data_general, train_data_directional, tra
 
         loss_directional_item = loss_directional.item()
         loss_directional = None
-        preds_bidirectional = model(train_data_bidirectional)
+        z = model.encoder(train_data_bidirectional.x, train_data_bidirectional.edge_index)
+        preds_bidirectional = model.decoder(z, train_data_bidirectional.edge_label_index)
         loss_bidirectional = train_loss_fn_bidirectional(preds_bidirectional, train_data_bidirectional.edge_label)
         loss_bidirectional.backward()
 
@@ -145,7 +148,7 @@ def train_3_tasks_multiobjective(train_data_general, train_data_directional, tra
         if val_datasets is not None:
             val_losses_by_dataset = []
             model.eval()
-            z = model.encoder(val_dataset.x, val_dataset.edge_index)
+            z = model.encoder(train_data_general.x, train_data_general.edge_index)
             for val_dataset in val_datasets:
                 if val_dataset.edge_label_index.size(1) != 0:
                     with torch.no_grad():
