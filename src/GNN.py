@@ -358,9 +358,8 @@ class DecoderLinear_for_EffectiveLP(Module):
         self.mlp_lp.reset_parameters()
 
 
-    
-
 class DecoderLinear_for_EffectiveLP_multiclass(Module):
+    
     def __init__(self, input_dim, output_dim, bias, dropout):
         super().__init__()
         self.input_dim = input_dim
@@ -369,20 +368,12 @@ class DecoderLinear_for_EffectiveLP_multiclass(Module):
         self.dropout = Dropout(dropout)
         self.output_dim = output_dim # it must be 1
 
-    def forward(self, batch):
+    def forward(self, x, edge_label_index):
 
-        new_batch = copy.copy(batch)
+        if edge_label_index in ["full_graph"]:
 
-        if batch.edge_label_index in ["full_graph"]:
-
-
-
-            srcs_trasf = self.src_linear(new_batch.x).reshape(batch.num_nodes, 1, self.output_dim)
-
-
-
-            dsts_trasf = self.dst_linear(new_batch.x)
-
+            srcs_trasf = self.src_linear(x).reshape(x.shape[0], 1, self.output_dim)
+            dsts_trasf = self.dst_linear(x)
 
             s_ij = (srcs_trasf + dsts_trasf).squeeze().sigmoid()
             s_ji = s_ij.t()
@@ -396,31 +387,20 @@ class DecoderLinear_for_EffectiveLP_multiclass(Module):
 
             log_probs = torch.log(probs.clamp(min = 1e-10, max = 1.))
 
+            x = self.dropout(log_probs) 
 
+        elif torch.is_tensor(edge_label_index) and not self.training:
 
-            new_batch.x = self.dropout(log_probs) 
-
-
-
-        elif torch.is_tensor(batch.edge_label_index) and not self.training:
-
-            src_logits = self.src_linear(batch.x[batch.edge_label_index[0,:],:])
-            dst_logits = self.dst_linear(batch.x[batch.edge_label_index[1,:],:])
-            
+            src_logits = self.src_linear(x[edge_label_index[0,:],:])
+            dst_logits = self.dst_linear(x[edge_label_index[1,:],:])
 
             probs = (src_logits + dst_logits).sigmoid()
 
-
-
-            new_batch.x = probs 
+            x = probs 
             
-        return new_batch
-
-       
+        return x
     
     def reset_parameters(self):
         super().reset_parameters()
         reset_parameters(self.src_linear)
         reset_parameters(self.dst_linear)
-
-        
